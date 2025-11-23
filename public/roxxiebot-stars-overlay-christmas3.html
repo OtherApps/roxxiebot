@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RoxxieBot – Stars Overlay (Christmas)</title>
+<style>
+  :root {
+    --xmas-red: #ff4b5c;
+    --xmas-green: #3cbf6b;
+    --xmas-gold: #f9e28c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #fdfdfd;
+  }
+
+  .snow {
+    pointer-events: none;
+    position: fixed;
+    top: -10%;
+    left: 0;
+    width: 100%;
+    height: 120%;
+    background-image:
+      radial-gradient(2px 2px at 20% 20%, rgba(255,255,255,0.65) 50%, transparent 60%),
+      radial-gradient(2px 2px at 80% 0%, rgba(255,255,255,0.75) 50%, transparent 60%),
+      radial-gradient(2px 2px at 0% 50%, rgba(255,255,255,0.6) 50%, transparent 60%),
+      radial-gradient(2px 2px at 100% 50%, rgba(255,255,255,0.5) 50%, transparent 60%),
+      radial-gradient(2px 2px at 50% 100%, rgba(255,255,255,0.7) 50%, transparent 60%);
+    background-size: 180px 260px;
+    animation: snow-fall 18s linear infinite;
+    opacity: 0.6;
+    z-index: -1;
+  }
+
+  @keyframes snow-fall {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(80px); }
+  }
+
+  .overlay-wrapper {
+    width: 100%;
+    height: 100%;
+    padding: 8px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(8, 10, 18, 0.82);
+    border-radius: 16px;
+    border: 1px solid rgba(249,226,140,0.55);
+    box-shadow:
+      0 0 18px rgba(0,0,0,0.9),
+      0 0 12px rgba(60,191,107,0.55);
+    padding: 10px 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  .board-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--xmas-gold);
+    text-shadow: 0 0 8px rgba(249,226,140,0.7);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .title span {
+    font-size: 15px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: #f0f0f0;
+    opacity: 0.85;
+    text-align: right;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+  }
+
+  th, td {
+    padding: 3px 4px;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  th {
+    color: var(--xmas-gold);
+    border-bottom: 1px solid rgba(249,226,140,0.35);
+  }
+
+  tbody tr:nth-child(odd) {
+    background: rgba(255,255,255,0.02);
+  }
+
+  tbody tr {
+    transition: transform 420ms ease, background-color 420ms ease;
+  }
+
+  tbody tr.moved {
+    background-color: rgba(255,75,92,0.22);
+  }
+
+  .rank {
+    width: 20px;
+    color: var(--xmas-gold);
+    font-weight: 600;
+  }
+
+  .user {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stars {
+    text-align: right;
+    font-weight: 600;
+    color: var(--xmas-green);
+    text-shadow: 0 0 6px rgba(60,191,107,0.7);
+  }
+</style>
+<script src="functions.js"></script>
+</head>
+<body>
+<div class="snow"></div>
+<div class="overlay-wrapper">
+  <div class="board">
+    <div class="board-header">
+      <div class="title">
+        🎄 Top Stars
+        <span>⭐</span>
+      </div>
+      <div class="subtitle">
+        Combined across Twitch / TikTok / YouNow
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th style="text-align:right;">Stars</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let viewers = [];
+
+// Load from same localStorage key as Christmas dashboard
+function loadViewers(data) {
+  const raw = data;
+  if (!raw) { viewers = []; return; }
+  try { viewers = JSON.parse(raw) || []; } catch(e) { viewers = []; }
+  viewers.forEach(v => { if (typeof v.stars === "undefined") v.stars = 0; });
+  renderLeaderboard();
+}
+
+function aggregated() {
+  const map = {};
+  viewers.forEach(v => {
+    const key = v.username.toLowerCase();
+    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
+    map[key].stars += v.stars;
+  });
+  return Object.values(map);
+}
+
+function renderLeaderboard() {
+  const tbody = document.getElementById("leaderboard-body");
+  const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  const oldPos = {};
+  oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
+
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,10);
+
+  const rowMap = {};
+  oldRows.forEach(r=>rowMap[r.dataset.id]=r);
+
+  tbody.innerHTML = "";
+  sorted.forEach((u, i)=>{
+    let row = rowMap[u.key];
+    if (!row) {
+      row = document.createElement("tr");
+      row.dataset.id = u.key;
+    } else {
+      row.innerHTML = "";
+    }
+
+    row.innerHTML = `
+      <td class="rank">${i+1}</td>
+      <td class="user">${u.username}</td>
+      <td class="stars">${u.stars}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  const newRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  newRows.forEach(row=>{
+    const id=row.dataset.id;
+    if (oldPos[id]!=null){
+      const newY=row.getBoundingClientRect().top;
+      const delta=oldPos[id]-newY;
+      if (Math.abs(delta)>2){
+        row.style.transform = "translateY(" + delta + "px)";
+        row.classList.add("moved");
+        requestAnimationFrame(()=> row.style.transform = "" );
+      }
+    }
+  });
+}
+
+// Initial load + polling refresh
+loadJson()
+//renderLeaderboard();
+
+// Poll every 2 seconds for changes from the dashboard
+setInterval(() => {
+//  loadViewers();
+	loadJson()
+  //renderLeaderboard();
+}, 2000);
+</script>
+</body>
+</html>

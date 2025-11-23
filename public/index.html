@@ -1,0 +1,307 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RoxxieBot – Stars System (Christmas Edition)</title>
+<script src="functions.js"></script>
+<script src="websockets.js"></script>
+<script src="YnChat.js"></script>
+    <link rel="stylesheet" href="main.css">
+<style>
+
+</style>
+</head>
+<body>
+<div class="snow"></div>
+
+<h1>
+  <span class="emoji">🎄</span>
+  RoxxieBot – Stars System
+  <span class="emoji">⭐</span>
+  <span class="emoji">🎁</span>
+</h1>
+<p class="small-note">
+  <strong>Christmas Edition:</strong> same Stars logic, cozy festive skin. Works for Twitch / TikTok / YouNow, leaderboard shows combined Stars.
+</p>
+
+<div class="row">
+  <div class="card">
+    <h2>Viewer Selector</h2>
+    <div class="row">
+      <div style="flex:1; min-width:160px;">
+        <label>Platform
+          <select id="platform-select">
+            <option value="twitch">Twitch</option>
+            <option value="tiktok">TikTok</option>
+            <option value="younow">YouNow</option>
+          </select>
+        </label>
+      </div>
+      <div style="flex:2; min-width:200px;">
+        <label>Username
+          <input id="username-input" type="text" placeholder="viewer name" />
+        </label>
+      </div>
+    </div>
+    <button class="btn" id="ensure-viewer-btn">Select / Create Viewer</button>
+    <p id="current-viewer-label" class="small-note">No viewer selected.</p>
+    <label style="margin-top:6px; display:flex; align-items:center; gap:6px; font-size:13px;">
+      <input type="checkbox" id="double-stars-toggle" />
+      Double Stars Mode (Santa’s Double Rewards 🎅 x2)
+    </label>
+  </div>
+
+  <div class="card">
+    <h2>Subs & Gifts</h2>
+    <p class="small-note">
+      Use for subs / gifts across all platforms. (Auto Twitch logic can sit on top of this later.)
+    </p>
+    <button class="btn" data-event="tier1-sub">Tier 1 Sub (+10⭐)</button>
+    <button class="btn" data-event="tier2-sub">Tier 2 Sub (+20⭐)</button>
+    <button class="btn" data-event="tier3-sub">Tier 3 Sub (+35⭐)</button>
+    <br />
+    <button class="btn" data-event="gift-sub">Gifted Sub (+10⭐)</button>
+    <button class="btn" data-event="wishlist">Wishlist / Physical Gift (+10⭐)</button>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card">
+    <h2>Bits / Coins & Perks</h2>
+    <p class="small-note">
+      Twitch bits, TikTok coins, and top gifter perks. Great for holiday hype trains.
+    </p>
+    <button class="btn" data-event="bits-1000">1000 Bits (+10⭐)</button>
+    <button class="btn" data-event="coins-1000">1000 Coins (+10⭐)</button>
+    <br />
+    <button class="btn" data-event="top-sub-gifter">Top Sub Gifter (+5⭐)</button>
+    <button class="btn" data-event="top-tiktok-gifter">Top TikTok Gifter (+5⭐)</button>
+    <button class="btn" data-event="top-bit-giver">Top Bit Giver (+5⭐)</button>
+  </div>
+
+  <div class="card">
+    <h2>Games / Mod Actions</h2>
+    <p class="small-note">
+      Beat the Intro, Discord boosts, jumpscares, quiz answers, and more holiday chaos.
+    </p>
+    <button class="btn" data-event="beat-intro-win">Beat Intro Winner (+4⭐)</button>
+    <button class="btn" data-event="beat-intro-second">Beat Intro 2nd (+3⭐)</button>
+    <br />
+    <button class="btn" data-event="discord-boost">Discord Boost (+3⭐)</button>
+    <button class="btn" data-event="jumpscare">Jumpscare (+2⭐)</button>
+    <br />
+    <button class="btn" data-event="correct-answer">Correct Answer (+2⭐)</button>
+  </div>
+</div>
+
+<div class="card" style="max-width:1040px;">
+  <h2>Session Log</h2>
+  <p class="small-note">
+    This is just a local log for this session (not connected to Twitch yet in this Christmas skin). Great for mods to track what they clicked.
+  </p>
+  <pre id="live-log"></pre>
+</div>
+
+<div class="card" style="max-width:1040px;">
+  <div class="card-header-row">
+    <h2 style="margin:0;">Leaderboard (Top 10 – Combined Stars)</h2>
+    <button class="btn btn-ghost" id="reset-stars-btn">
+      🎄 Reset All Stars
+    </button>
+  </div>
+  <p class="small-note">
+    If someone rockets from 3rd to 1st place, their row will gracefully slide up like a festive arrivals board, pushing others down.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Stars</th>
+        <th>Adjust</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body"></tbody>
+  </table>
+</div>
+
+<script>
+let viewers = [];
+let doubleStars = false;
+let currentViewer = null;
+
+function loadViewers(data) {
+
+	const raw=data;
+	if (!raw) { viewers = []; return; }
+		try { viewers = JSON.parse(raw) || []; } catch(e) { console.log(e);viewers = []; }
+		
+		viewers.forEach(v => { if (typeof v.stars === "undefined") v.stars = 0; });
+		renderLeaderboard()
+  
+}
+function saveViewers() { 
+
+localStorage.setItem("roxStarsDB_christmas", JSON.stringify(viewers));
+
+ }
+function getId(platform, username) { return platform + ":" + username.toLowerCase().trim(); }
+function ensureViewer(platform, username) {
+  const id = getId(platform, username);
+  let v = viewers.find(x => x.id === id);
+  if (!v) { v = { id, platform, username: username.trim(), stars: 0 }; viewers.push(v); saveViewers(); }
+  return v;
+}
+function addStars(v, base, sourceLabel) {
+  let amount = doubleStars ? base * 2 : base;
+  v.stars += amount;
+  if (v.stars < 0) v.stars = 0;
+  
+  AddNew(v.id,v.username,v.stars,v.stickers);
+  
+  //saveViewers();
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+  logLive("+" + amount + "⭐ to " + v.username + " (" + sourceLabel + ")");
+}
+function adjustAggregate(username, delta) {
+  
+  const key = username.toLowerCase();
+  const id = "manual:" + key;
+  let v = viewers.find(x => x.id === id);
+  if (!v) { v = { id, platform: "manual", username, stars: 0 }; viewers.push(v); }
+  v.stars += delta;
+  
+  if (v.stars < 0) v.stars = 0;
+  saveViewers();
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+  logLive((delta>0?"+":"") + delta + "⭐ manual adjust for " + username);
+}
+function aggregated() {
+  const map = {};
+ 
+  viewers.forEach(v => {
+ 
+  
+    const key = v.username.toLowerCase();
+    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
+    map[key].stars += v.stars;
+  });
+ //console.log(Object.values(map));
+  
+  return Object.values(map);
+}
+function renderLeaderboard() {
+loadJson(); 
+ const tbody = document.getElementById("leaderboard-body");
+  const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  const oldPos = {};
+  oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,10);
+  const rowMap = {};
+  
+  oldRows.forEach(r=>rowMap[r.dataset.id]=r);
+  tbody.innerHTML = "";
+  sorted.forEach((u, i)=>{
+    let row = rowMap[u.key];
+    if (!row) { row = document.createElement("tr"); row.dataset.id = u.key; }
+    else { row.innerHTML = ""; }
+    row.innerHTML = `
+      <td>${i+1}</td>
+      <td>${u.username}</td>
+      <td>${u.stars}</td>
+      <td>
+        <button class="btn btn-ghost" onclick="adjustAggregate('${u.username.replace(/'/g, "\'")}',5)">+5⭐</button>
+        <button class="btn btn-ghost" onclick="adjustAggregate('${u.username.replace(/'/g, "\'")}',-5)">-5⭐</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+  const newRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  newRows.forEach(row=>{
+    const id=row.dataset.id;
+    if (oldPos[id]!=null){
+      const newY=row.getBoundingClientRect().top;
+      const delta=oldPos[id]-newY;
+      if (Math.abs(delta)>2){
+        row.style.transform=`translateY(${delta}px)`;
+        row.classList.add("moved");
+        requestAnimationFrame(()=> row.style.transform="" );
+      }
+    }
+  });
+}
+function updateCurrentViewerLabel() {
+  const label = document.getElementById("current-viewer-label");
+  if (!currentViewer) { label.textContent = "No viewer selected."; return; }
+  const list = aggregated();
+  const entry = list.find(u => u.username.toLowerCase() === currentViewer.username.toLowerCase());
+  const total = entry ? entry.stars : 0;
+  label.textContent = "Current: " + currentViewer.username + " – Total Stars (all platforms): " + total + "⭐";
+}
+function logLive(msg) {
+  const pre = document.getElementById("live-log");
+  if (!pre) return;
+  const now = new Date();
+  const stamp = now.toLocaleTimeString();
+  const line = "[" + stamp + "] " + msg;
+  const lines = pre.textContent.split("\n").filter(Boolean);
+  lines.unshift(line);
+  pre.textContent = lines.slice(0, 120).join("\n");
+}
+document.getElementById("ensure-viewer-btn").onclick = () => {
+  const p = document.getElementById("platform-select").value;
+  const u = document.getElementById("username-input").value.trim();
+  if (!u) { alert("Enter username"); return; }
+  currentViewer = ensureViewer(p, u);
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+  logLive("Selected viewer: " + currentViewer.username + " [" + p + "]");
+};
+document.getElementById("double-stars-toggle").onchange = e => {
+  doubleStars = e.target.checked;
+  logLive("Double Stars Mode: " + (doubleStars ? "ON" : "OFF"));
+};
+document.querySelectorAll("button[data-event]").forEach(btn => {
+  btn.onclick = () => {
+    if (!currentViewer) { alert("Select a viewer first"); return; }
+    const e = btn.dataset.event;
+    const map = {
+      "tier1-sub": { stars:10, label:"Tier 1 Sub" },
+      "tier2-sub": { stars:20, label:"Tier 2 Sub" },
+      "tier3-sub": { stars:35, label:"Tier 3 Sub" },
+      "gift-sub": { stars:10, label:"Gifted Sub" },
+      "wishlist": { stars:10, label:"Wishlist / Physical Gift" },
+      "bits-1000": { stars:10, label:"1000 Bits" },
+      "coins-1000": { stars:10, label:"1000 Coins" },
+      "top-sub-gifter": { stars:5, label:"Top Sub Gifter" },
+      "top-tiktok-gifter": { stars:5, label:"Top TikTok Gifter" },
+      "top-bit-giver": { stars:5, label:"Top Bit Giver" },
+      "beat-intro-win": { stars:4, label:"Beat Intro Winner" },
+      "beat-intro-second": { stars:3, label:"Beat Intro 2nd" },
+      "discord-boost": { stars:3, label:"Discord Boost" },
+      "jumpscare": { stars:2, label:"Jumpscare" },
+      "correct-answer": { stars:2, label:"Correct Answer" }
+    };
+    const def = map[e];
+    if (!def) return;
+    addStars(currentViewer, def.stars, def.label);
+  };
+});
+document.getElementById("reset-stars-btn").onclick = () => {
+  if (!confirm("Reset ALL viewers' Stars to 0 for this Christmas session?")) return;
+  viewers.forEach(v => v.stars = 0);
+  saveViewers();
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+  logLive("All Stars reset to 0 (Christmas reset).");
+};
+loadJson();
+//renderLeaderboard();
+updateCurrentViewerLabel();
+</script>
+
+</body>
+</html>
