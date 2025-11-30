@@ -1,8 +1,8 @@
-const serverURL= "http://localhost:8080/"; 
-
+//const serverURL= "http://localhost:8080/"; 
+const serverURL= "./"; 
 async function loadJson(){
 	  try {
-        const response = await fetch(serverURL+'vipboard.json');
+        const response = await fetch('./vipboard.json');
         const data = await response.text();
 		loadViewers(data);
 	  
