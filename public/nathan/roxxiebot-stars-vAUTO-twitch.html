@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RoxxieBot – Stars System vAUTO (Twitch)</title>
+  <style>
+
+  </style>
+</head>
+<body>
+
+<h1>RoxxieBot – Stars System (AUTO Twitch)</h1>
+<p class="small-note">
+  Automatic Stars from <strong>Twitch subs / gifted subs / bits</strong>, plus manual buttons for everything else.
+  TikTok + YouNow can still be updated via mod buttons. Leaderboard shows <strong>combined Stars per username</strong>.
+</p>
+
+<div class="row">
+  <!-- Viewer selector -->
+  <div class="card">
+    <h2>Viewer Selector</h2>
+    <div class="row">
+      <div style="flex:1; min-width:160px;">
+        <label>Platform
+          <select id="platform-select">
+            <option value="twitch">Twitch</option>
+            <option value="tiktok">TikTok</option>
+            <option value="younow">YouNow</option>
+          </select>
+        </label>
+      </div>
+      <div style="flex:2; min-width:200px;">
+        <label>Username
+          <input id="username-input" type="text" placeholder="viewer name" />
+        </label>
+      </div>
+    </div>
+
+    <button id="ensure-viewer-btn">Select / Create Viewer</button>
+    <p id="current-viewer-label" class="small-note">No viewer selected.</p>
+
+    <label>
+      <input type="checkbox" id="double-stars-toggle" />
+      Double Stars Mode (x2 new Stars)
+    </label>
+  </div>
+
+  <!-- Subs & gifts (manual) -->
+  <div class="card">
+    <h2>Subs & Gifts (Manual)</h2>
+    <p class="small-note">
+      Use these when testing or for TikTok / YouNow events. On Twitch, subs & gifted subs are also added automatically.
+    </p>
+    <button data-event="tier1-sub">Tier 1 Sub (+10⭐)</button>
+    <button data-event="tier2-sub">Tier 2 Sub (+20⭐)</button>
+    <button data-event="tier3-sub">Tier 3 Sub (+35⭐)</button>
+    <br />
+    <button data-event="gift-sub">Gifted Sub (+10⭐)</button>
+    <button data-event="wishlist">Wishlist Gift (+10⭐)</button>
+  </div>
+</div>
+
+<!-- Bits / Games -->
+<div class="row">
+  <div class="card">
+    <h2>Bits / Coins & Perks (Manual)</h2>
+    <p class="small-note">
+      For Twitch bits / TikTok coins / stream perks. Twitch bits also auto-add Stars from the live listener.
+    </p>
+    <button data-event="bits-1000">1000 Bits (+10⭐)</button>
+    <button data-event="coins-1000">1000 Coins (+10⭐)</button>
+    <br />
+    <button data-event="top-sub-gifter">Top Sub Gifter (+5⭐)</button>
+    <button data-event="top-tiktok-gifter">Top TikTok Gifter (+5⭐)</button>
+    <button data-event="top-bit-giver">Top Bit Giver (+5⭐)</button>
+  </div>
+
+  <div class="card">
+    <h2>Games / Mod Actions</h2>
+    <button data-event="beat-intro-win">Beat Intro Winner (+4⭐)</button>
+    <button data-event="beat-intro-second">Beat Intro 2nd (+3⭐)</button>
+    <br />
+    <button data-event="discord-boost">Discord Boost (+3⭐)</button>
+    <button data-event="jumpscare">Jumpscare (+2⭐)</button>
+    <br />
+    <button data-event="correct-answer">Correct Answer (+2⭐)</button>
+  </div>
+</div>
+
+<!-- Live log -->
+<div class="card" style="max-width:1040px;">
+  <h2>Live Twitch Event Log</h2>
+  <p class="small-note">
+    Shows events coming from the Twitch bot server: subs, gifted subs, bits, and chat notices used for debugging.
+  </p>
+  <pre id="live-log"></pre>
+</div>
+
+<!-- Leaderboard -->
+<div class="card" style="max-width:1040px;">
+  <div class="card-header-row">
+    <h2 style="margin:0;">Leaderboard (Top 10 – Combined Stars)</h2>
+    <button id="reset-stars-btn" style="padding:6px 10px; font-size:11px;">
+      Reset All Stars
+    </button>
+  </div>
+  <p class="small-note">
+    If someone jumps from 3rd to 1st place, their row will smoothly slide up while others slide down.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Stars</th>
+        <th>Adjust</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body"></tbody>
+  </table>
+</div>
+
+<script>
+// ========== DATA MODEL ==========
+let viewers = [];
+let doubleStars = false;
+let currentViewer = null;
+
+function loadViewers() {
+  const raw = localStorage.getItem("roxStarsDB_auto");
+  if (!raw) {
+    viewers = [];
+    return;
+  }
+  try {
+    viewers = JSON.parse(raw) || [];
+  } catch (e) {
+    console.error("Failed to parse viewers", e);
+    viewers = [];
+  }
+  viewers.forEach(v => {
+    if (typeof v.stars === "undefined") v.stars = 0;
+	if (typeof v.stickers === "undefined") v.stickers = 0;
+  });
+}
+
+function saveViewers() {
+  localStorage.setItem("roxStarsDB_auto", JSON.stringify(viewers));
+}
+
+function getId(platform, username) {
+  return platform + ":" + username.toLowerCase().trim();
+}
+
+function ensureViewer(platform, username) {
+  const id = getId(platform, username);
+  let v = viewers.find(x => x.id === id);
+  if (!v) {
+    v = { id, platform, username: username.trim(), stars: 0 };
+    viewers.push(v);
+    saveViewers();
+  }
+  return v;
+}
+
+function addStars(v, base) {
+//console.log(base);
+
+ let amount = doubleStars ? base * 2 : base;
+  v.stars = parseInt(v.stars) + parseInt(amount);
+ // console.log(v);
+  
+  if (v.stars < 0) v.stars = 0;
+  
+  saveViewers();
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+  /* */
+}
+
+function adjustAggregate(username, delta) {
+  const key = username.toLowerCase();
+  const id = "manual:" + key;
+  let v = viewers.find(x => x.id === id);
+  if (!v) {
+    v = { id, platform: "manual", username, stars: 0 };
+    viewers.push(v);
+  }
+  v.stars += delta;
+  if (v.stars < 0) v.stars = 0;
+  saveViewers();
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+}
+
+function aggregated() {
+  const map = {};
+  viewers.forEach(v => {
+    const key = v.username.toLowerCase();
+    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
+    map[key].stars += v.stars;
+  });
+  return Object.values(map);
+}
+
+// ========== LEADERBOARD RENDERING (FLIP) ==========
+function renderLeaderboard() {
+  const tbody = document.getElementById("leaderboard-body");
+  const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  const oldPos = {};
+  oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
+
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,10);
+
+  const rowMap = {};
+  oldRows.forEach(r=>rowMap[r.dataset.id]=r);
+
+  tbody.innerHTML = "";
+  sorted.forEach((u, i)=>{
+    let row = rowMap[u.key];
+    if (!row) {
+      row = document.createElement("tr");
+      row.dataset.id = u.key;
+    } else {
+      row.innerHTML = "";
+    }
+
+    row.innerHTML = `
+      <td>${i+1}</td>
+      <td>${u.username}</td>
+      <td>${u.stars}</td>
+      <td>
+        <button onclick="adjustAggregate('${u.username.replace(/'/g, "\'")}',5)">+5⭐</button>
+        <button onclick="adjustAggregate('${u.username.replace(/'/g, "\'")}',-5)">-5⭐</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  const newRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  newRows.forEach(row=>{
+    const id=row.dataset.id;
+    if (oldPos[id]!=null){
+      const newY=row.getBoundingClientRect().top;
+      const delta=oldPos[id]-newY;
+      if (Math.abs(delta)>2){
+        row.style.transform=`translateY(${delta}px)`;
+        row.classList.add("moved");
+        requestAnimationFrame(()=> row.style.transform="" );
+      }
+    }
+  });
+}
+
+function updateCurrentViewerLabel() {
+  const label = document.getElementById("current-viewer-label");
+  if (!currentViewer) {
+    label.textContent = "No viewer selected.";
+    return;
+  }
+  const list = aggregated();
+  const entry = list.find(u => u.username.toLowerCase() === currentViewer.username.toLowerCase());
+  const total = entry ? entry.stars : 0;
+  label.textContent = `Current: ${currentViewer.username} – Total Stars (all platforms): ${total}⭐`;
+}
+
+// ========== UI BINDINGS ==========
+document.getElementById("ensure-viewer-btn").onclick = () => {
+  const p = document.getElementById("platform-select").value;
+  const u = document.getElementById("username-input").value.trim();
+  if (!u) {
+    alert("Enter username");
+    return;
+  }
+  currentViewer = ensureViewer(p, u);
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+};
+
+document.getElementById("double-stars-toggle").onchange = e => {
+  doubleStars = e.target.checked;
+};
+
+document.querySelectorAll("button[data-event]").forEach(btn => {
+  btn.onclick = () => {
+    if (!currentViewer) {
+      alert("Select a viewer first");
+      return;
+    }
+    const e = btn.dataset.event;
+    const map = {
+      "tier1-sub":10, "tier2-sub":20, "tier3-sub":35,
+      "gift-sub":10, "wishlist":10,
+      "bits-1000":10, "coins-1000":10,
+      "top-sub-gifter":5, "top-tiktok-gifter":5, "top-bit-giver":5,
+      "beat-intro-win":4, "beat-intro-second":3,
+      "discord-boost":3, "jumpscare":2, "correct-answer":2
+    };
+    addStars(currentViewer, map[e] || 0);
+  };
+});
+
+document.getElementById("reset-stars-btn").onclick = () => {
+  if (!confirm("Reset ALL viewers' Stars to 0? Usernames will stay, Stars only reset.")) return;
+  viewers.forEach(v => v.stars = 0);
+  saveViewers();
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+};
+
+// ========== LIVE LOG HELPER ==========
+function logLive(msg) {
+  const pre = document.getElementById("live-log");
+  if (!pre) return;
+  const now = new Date();
+  const stamp = now.toLocaleTimeString();
+  const line = `[${stamp}] ${msg}`;
+  const lines = pre.textContent.split("\n").filter(Boolean);
+  lines.unshift(line);
+  pre.textContent = lines.slice(0, 100).join("\n");
+}
+
+// ========== WEBSOCKET CLIENT (CONNECT TO NODE SERVER) ==========
+(function initWebSocket() {
+  let ws;
+  function connect() {
+    try {
+      ws = new WebSocket("ws://localhost:443");
+      ws.onopen = () => {
+        logLive("Connected to local Twitch event server (ws://localhost:3001).");
+      };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleServerEvent(data);
+        } catch (e) {
+          console.error("Failed to parse WS message", e);
+        }
+      };
+      ws.onclose = () => {
+        logLive("Disconnected from Twitch event server. Reconnecting in 5s...");
+        setTimeout(connect, 5000);
+      };
+      ws.onerror = (err) => {
+        console.error("WS error", err);
+      };
+    } catch (e) {
+      console.error("Error opening WebSocket:", e);
+    }
+  }
+  connect();
+})();
+
+// ========== HANDLE EVENTS FROM SERVER ==========
+function handleServerEvent(evt) {
+  if (!evt || !evt.type) return;
+  switch (evt.type) {
+    case "info":
+      logLive(evt.message || "Info");
+	  logLive(`[Twitch] ${evt.username}: ${evt.message}`);
+	  
+      break;
+    case "chat":
+		handleChat(evt)
+      break;
+    case "subscription":
+      handleSubEvent(evt);
+      break;
+    case "resub":
+      handleSubEvent(evt);
+      break;
+    case "subgift":
+      handleGiftSubEvent(evt);
+      break;
+    case "cheer":
+      handleCheerEvent(evt);
+      break;
+    default:
+      console.log("Unhandled event from server:", evt);
+  }
+}
+
+function handleSubEvent(evt) {
+  const username = (evt.username || "").trim();
+  const plan = evt.tier || "1000";
+  if (!username) return;
+  const viewer = ensureViewer("twitch", username);
+  let stars = 10;
+  if (plan === "2000") stars = 20;
+  else if (plan === "3000") stars = 35;
+  addStars(viewer, stars);
+  logLive(`[AUTO] Sub from ${username} (tier ${plan}) -> +${stars}⭐`);
+}
+
+function handleGiftSubEvent(evt) {
+  const recipient = (evt.recipient || "").trim();
+  if (!recipient) return;
+  const viewer = ensureViewer("twitch", recipient);
+  const stars = 10; // Gifted sub -> 10 Stars to recipient
+  addStars(viewer, stars);
+  logLive(`[AUTO] Gifted sub to ${recipient} -> +${stars}⭐`);
+}
+
+function handleCheerEvent(evt) {
+  const username = (evt.username || "").trim();
+  const bits = parseInt(evt.bits || "0", 10);
+  if (!username || !bits || bits <= 0) return;
+  const viewer = ensureViewer("twitch", username);
+  const stars = Math.floor(bits / 1000) * 10;
+  if (stars <= 0) return;
+  addStars(viewer, stars);
+  logLive(`[AUTO] Cheer from ${username} (${bits} bits) -> +${stars}⭐`);
+}
+function tradeVipPoints(fr,ot,amount,stick){
+
+	const from = ensureViewer("twitch", fr);
+	const to = ensureViewer("twitch", ot);
+	
+	if((from.star>=amount )&&(from.stickers>=strick)){
+		
+		from.star -=amount; 
+		from.stickers -=stick; 
+		
+		to.star+=amount;
+		to.sticker+=stick;
+		
+	
+	}
+	else{
+	
+	logLive("Something went  wrong. User did not have enough stars!");
+	
+	}
+
+}
+
+function handleChat(evt){
+	//grab all commands
+	
+	
+	var username = evt.username; 
+	const viewer = ensureViewer("twitch", username);
+	if(evt.message.includes("!")){
+		
+		var fullmessage=evt.message.split(" "); 
+		if(fullmessage[0].includes("!add"))
+		{
+		//add 
+		addStars(viewer,fullmessage[1]);
+		//onsole.log(fullmessage);
+		
+		}
+		else if(fullmessage[0].includes("!give")){
+		// give stars to another user 
+		
+		}
+		else{
+		
+		//other 
+		}
+	}
+
+}
+// Init
+loadViewers();
+renderLeaderboard();
+updateCurrentViewerLabel();
+</script>
+<script src="YnChat.js"></script>
+
+</body>
+</html><!--
+
+/*
+{
+    "type": "chat",
+    "platform": "twitch",
+    "username": "sircherrythesmuttysheep",
+    "message": "weeee"
+}
+
+*/ -->
