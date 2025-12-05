@@ -7,8 +7,8 @@
 	const cMin = currentTime.getMinutes();
 	const cHour=currentTime.getHours();
 	
-var fixurl = "http://192.168.1.172:8080/raw?url=";
-//var fixurl= "https://swan-tight-porpoise.ngrok-free.app/raw?url="; 
+//var fixurl = "http://192.168.1.172:8080/raw?url=";
+var fixurl= "https://swan-tight-porpoise.ngrok-free.app/raw?url="; 
 	getUserID();
 window.setInterval(function() {
 			getUserID();
@@ -75,7 +75,7 @@ var pass=true;
 				//console.log(MessageArray);
 				if((MessageArray[1]>cMin)||(MessageArray[0] >cHour))
 				{
-				
+					//	console.log(MessageTime+" " +MSG[i]['comment']);
 						if(MSG[i].broadcasterMod!=false){
 							
 							if(MSG[i]['comment'].includes("!vip"))

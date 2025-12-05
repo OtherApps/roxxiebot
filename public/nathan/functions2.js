@@ -1,0 +1,165 @@
+function fadeOut(element) {
+    // Start opacity at its current computed value or 1 if not set
+    let opacity = parseFloat(window.getComputedStyle(element).opacity) || 1;
+
+    const interval = setInterval(function() {
+        if (opacity <= 0.1) {
+            clearInterval(interval); // Stop the interval
+            element.style.display = 'none'; // Hide the element completely from layout
+        } else {
+            opacity -= 0.05; // Decrease opacity by a small step
+            element.style.opacity = opacity;
+        }
+    }, 50); // The '50' defines the speed/smoothness of the animation
+}
+
+function fadeIn(element) {
+    let opacity = 0;
+    element.style.opacity = 0;
+    element.style.visibility = 'visible'; // Make it visible first so opacity can be seen
+
+    const interval = setInterval(function() {
+        if (opacity >= 1) {
+            clearInterval(interval); // Stop the interval when fully faded in
+        } else {
+            opacity += 0.05; // Increment opacity
+            element.style.opacity = opacity;
+        }
+    }, 50); // Adjust timing and increment for desired speed
+}
+
+async function loadJson(){
+	  try {
+        const response = await fetch(serverURL+'vipboard.json');
+        const data = await response.text();
+		loadViewers(data);
+	  
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+
+}
+
+function loadViewers(data) {
+  const raw = data;
+  if (!raw) { viewers = []; return; }
+  try { viewers = JSON.parse(raw) || []; } catch(e) { viewers = []; }
+  viewers.forEach(v => { if (typeof v.stars === "undefined") v.stars = 0; });
+  renderLeaderboard();
+}
+
+function aggregated() {
+  const map = {};
+  viewers.forEach(v => {
+    const key = v.username.toLowerCase();
+    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
+    map[key].stars += v.stars;
+  });
+  return Object.values(map);
+}
+
+async function makeItVisible(){
+var divScore = document.getElementById("scoreboard");
+divScore.style.display="inline-block";
+fadeIn(divScore);
+
+ await delay(8000); // Wait for 5 minutes
+ fadeOut(divScore)
+//divScore.style.display="none";
+//console.log("hidden now");
+
+}
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+
+
+function beginFun(TwitchChannel){
+
+	ComfyJS.onResub=(user, message, subtier, months, cumulativeMonths, streakMonths, data) =>{
+		}
+		/**/
+		ComfyJS.onSub=( user, message, subTierInfo, extra )=>{
+
+		};
+		
+		ComfyJS.onSubGift=( gifterUser, streakMonths, recipientUser, senderCount, subTierInfo, extra ) =>{
+			
+		}
+		
+		ComfyJS.onSubMysteryGift =( gifterUser, numbOfSubs, senderCount, subTierInfo, extra ) =>{
+			
+			//Fix this  above
+		}
+		
+	ComfyJS.onCommand = (user, command, message, flags, extra) => {
+	
+	
+	if(flags.mod || flags.broadcaster){
+	if(command==="vip"){
+	makeItVisible();
+	
+	}
+	
+  } 
+  
+	}
+ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+ //console.log( extra);
+ 
+}
+
+        ComfyJS.Init(TwitchChannel);
+  
+}
+
+
+function renderLeaderboard() {
+  const tbody = document.getElementById("leaderboard-body");
+  const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  const oldPos = {};
+  oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
+
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,10);
+
+  const rowMap = {};
+  oldRows.forEach(r=>rowMap[r.dataset.id]=r);
+
+  tbody.innerHTML = "";
+  sorted.forEach((u, i)=>{
+    let row = rowMap[u.key];
+    if (!row) {
+      row = document.createElement("tr");
+      row.dataset.id = u.key;
+    } else {
+      row.innerHTML = "";
+    }
+	u.stars=parseInt(u.stars);
+	
+    row.innerHTML = `
+      <td class="rank">${i+1}</td>
+      <td class="user">${u.username}</td>
+      <td class="stars">${u.stars}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  const newRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  newRows.forEach(row=>{
+    const id=row.dataset.id;
+    if (oldPos[id]!=null){
+      const newY=row.getBoundingClientRect().top;
+      const delta=oldPos[id]-newY;
+      if (Math.abs(delta)>2){
+        row.style.transform = "translateY(" + delta + "px)";
+        row.classList.add("moved");
+        requestAnimationFrame(()=> row.style.transform = "" );
+      }
+    }
+  });
+}
+
+
+
