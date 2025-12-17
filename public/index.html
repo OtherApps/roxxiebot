@@ -4,6 +4,7 @@
 <head>
 <meta charset="UTF-8" />
 <title>RoxxieBot – Stars System (Christmas Edition)</title>
+
 <script src="functions.js"></script>
 <script src="websockets.js"></script>
 <script src="YnChat.js"></script>
@@ -119,6 +120,7 @@
         <th>#</th>
         <th>Username</th>
         <th>Stars</th>
+		<th>Stickers</th>
         <th>Adjust</th>
       </tr>
     </thead>
@@ -131,14 +133,30 @@ let viewers = [];
 let doubleStars = false;
 let currentViewer = null;
 
+function adjustNames(data){
+var i ="";
+
+
+}
 function loadViewers(data) {
+console.log("Loading viewers");
 
 	const raw=data;
 	if (!raw) { viewers = []; return; }
 		try { viewers = JSON.parse(raw) || []; } catch(e) { console.log(e);viewers = []; }
 		
-		viewers.forEach(v => { if (typeof v.stars === "undefined") v.stars = 0; });
-		renderLeaderboard()
+		viewers.forEach(v => { 
+		if (typeof v.stars === "undefined")
+		{v.stars = 0}else{
+		v.stars=parseInt(v.stars);
+		
+		};
+		});
+	
+	//console.log(viewers);
+	adjustNames(viewers);
+	
+	renderLeaderboard()
   
 }
 function saveViewers() { 
@@ -149,35 +167,71 @@ localStorage.setItem("roxStarsDB_christmas", JSON.stringify(viewers));
 function getId(platform, username) { return platform + ":" + username.toLowerCase().trim(); }
 function ensureViewer(platform, username) {
   const id = getId(platform, username);
-  let v = viewers.find(x => x.id === id);
+  let vi = viewers.findIndex(x => x.username === username);
+  let v= viewers[vi];
+  
   if (!v) { v = { id, platform, username: username.trim(), stars: 0 }; viewers.push(v); saveViewers(); }
   return v;
 }
 function addStars(v, base, sourceLabel) {
   let amount = doubleStars ? base * 2 : base;
-  v.stars += amount;
+  v.stars = parseInt(v.stars)+parseInt(amount);
   if (v.stars < 0) v.stars = 0;
   
-  AddNew(v.id,v.username,v.stars,v.stickers);
+  AddNew(v.platform,v.username,v.stars,v.stickers);
+  //add stickers to array and save
+  
   
   //saveViewers();
   renderLeaderboard();
   updateCurrentViewerLabel();
   logLive("+" + amount + "⭐ to " + v.username + " (" + sourceLabel + ")");
 }
+function addStars2(v, base, sourceLabel,stick) {
+  let amount = doubleStars ? base * 2 : base;
+  v.stars = parseInt(v.stars)+parseInt(amount);
+  
+  if((isNaN(v.stickers)!=true)||(v.stickers!=null)){
+  v.stickers=parseInt(v.stickers)+parseInt(stick);
+  }
+  else
+  {
+  v.stickers= parseInt(stick); 
+  
+  }
+  //console.log(stick);
+  
+  if (v.stars < 0) v.stars = 0;
+  //console.log(stick);
+	AddNew(v.platform,v.username,v.stars,stick);
+	//console.log(v);
+
+  renderLeaderboard();
+  updateCurrentViewerLabel();
+  logLive("+" + amount + "⭐ to " + v.username + " (" + sourceLabel + ")");
+}
+
 function adjustAggregate(username, delta) {
   
   const key = username.toLowerCase();
   const id = "manual:" + key;
-  let v = viewers.find(x => x.id === id);
-  if (!v) { v = { id, platform: "manual", username, stars: 0 }; viewers.push(v); }
-  v.stars += delta;
+  let v = viewers.findIndex(x => x.username ===username);
+  //if (v<) { v = { id:"twitch", username, stars: 0}; viewers.push(v); }
+ //console.log(viewers[v]);
+// viewers[v].stars = parseInt(viewers[v].stars) ;
+  //viewers[v].stars +=delta;
+  console.log(viewers[v].stars)
+  //console.log(viewers[v].stars);
   
-  if (v.stars < 0) v.stars = 0;
-  saveViewers();
-  renderLeaderboard();
-  updateCurrentViewerLabel();
-  logLive((delta>0?"+":"") + delta + "⭐ manual adjust for " + username);
+  //if (v.stars < 0) v.stars = 0;
+//  console.log(username);
+  
+//  addStars2(viewers[v], 0 ,"twitch",0); 
+// saveViewers();
+//  renderLeaderboard();
+//  updateCurrentViewerLabel();
+  
+//  logLive((delta>0?"+":"") + delta + "⭐ manual adjust for " + username);
 }
 function aggregated() {
   const map = {};
@@ -191,30 +245,38 @@ function aggregated() {
   });
  //console.log(Object.values(map));
   
+  
+  
   return Object.values(map);
 }
 function renderLeaderboard() {
-loadJson(); 
+//loadJson(); 
  const tbody = document.getElementById("leaderboard-body");
   const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
   const oldPos = {};
   oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
-  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,10);
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars);
   const rowMap = {};
   
   oldRows.forEach(r=>rowMap[r.dataset.id]=r);
   tbody.innerHTML = "";
+  //console.log(viewers);
+  
   sorted.forEach((u, i)=>{
     let row = rowMap[u.key];
     if (!row) { row = document.createElement("tr"); row.dataset.id = u.key; }
     else { row.innerHTML = ""; }
+	
+	const ix=viewers.findIndex(p => p.username === u.username);
+	
     row.innerHTML = `
       <td>${i+1}</td>
       <td>${u.username}</td>
       <td>${u.stars}</td>
+	  <td>${viewers[ix].stickers}</td>
       <td>
-        <button class="btn btn-ghost" onclick="adjustAggregate('${u.username.replace(/'/g, "\'")}',5)">+5⭐</button>
-        <button class="btn btn-ghost" onclick="adjustAggregate('${u.username.replace(/'/g, "\'")}',-5)">-5⭐</button>
+        <button class="btn btn-ghost" onclick="adjustAggregate('${u.username}',5)">+5⭐</button>
+        <button class="btn btn-ghost" onclick="adjustAggregate('${u.username}',-5)">-5⭐</button>
       </td>
     `;
     tbody.appendChild(row);
@@ -236,9 +298,11 @@ loadJson();
 function updateCurrentViewerLabel() {
   const label = document.getElementById("current-viewer-label");
   if (!currentViewer) { label.textContent = "No viewer selected."; return; }
+  console.log(currentViewer);
+  
   const list = aggregated();
-  const entry = list.find(u => u.username.toLowerCase() === currentViewer.username.toLowerCase());
-  const total = entry ? entry.stars : 0;
+  const entry = list.findIndex(u => u.username === currentViewer.username);
+  const total = entry ? currentViewer.stars : 0;
   label.textContent = "Current: " + currentViewer.username + " – Total Stars (all platforms): " + total + "⭐";
 }
 function logLive(msg) {
@@ -269,11 +333,11 @@ document.querySelectorAll("button[data-event]").forEach(btn => {
     if (!currentViewer) { alert("Select a viewer first"); return; }
     const e = btn.dataset.event;
     const map = {
-      "tier1-sub": { stars:10, label:"Tier 1 Sub" },
-      "tier2-sub": { stars:20, label:"Tier 2 Sub" },
-      "tier3-sub": { stars:35, label:"Tier 3 Sub" },
-      "gift-sub": { stars:10, label:"Gifted Sub" },
-      "wishlist": { stars:10, label:"Wishlist / Physical Gift" },
+      "tier1-sub": { stars:10,stickers:5 ,label:"Tier 1 Sub" },
+      "tier2-sub": { stars:20,stickers:10,label:"Tier 2 Sub" },
+      "tier3-sub": { stars:35, stickers:15,label:"Tier 3 Sub" },
+      "gift-sub": { stars:10,stickers:5,label:"Gifted Sub" },
+      "wishlist": { stars:10, stickers:5,label:"Wishlist / Physical Gift" },
       "bits-1000": { stars:10, label:"1000 Bits" },
       "coins-1000": { stars:10, label:"1000 Coins" },
       "top-sub-gifter": { stars:5, label:"Top Sub Gifter" },
@@ -287,7 +351,8 @@ document.querySelectorAll("button[data-event]").forEach(btn => {
     };
     const def = map[e];
     if (!def) return;
-    addStars(currentViewer, def.stars, def.label);
+	
+    addStars2(currentViewer, def.stars, def.label,5);
   };
 });
 document.getElementById("reset-stars-btn").onclick = () => {
