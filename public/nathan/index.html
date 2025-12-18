@@ -167,7 +167,9 @@ localStorage.setItem("roxStarsDB_christmas", JSON.stringify(viewers));
 function getId(platform, username) { return platform + ":" + username.toLowerCase().trim(); }
 function ensureViewer(platform, username) {
   const id = getId(platform, username);
-  let v = viewers.find(x => x.id === id);
+  let vi = viewers.findIndex(x => x.username === username);
+  let v= viewers[vi];
+  
   if (!v) { v = { id, platform, username: username.trim(), stars: 0 }; viewers.push(v); saveViewers(); }
   return v;
 }
@@ -214,28 +216,19 @@ function adjustAggregate(username, delta) {
   const key = username.toLowerCase();
   const id = "manual:" + key;
   let v = viewers.findIndex(x => x.username ===username);
-  //if (v<) { v = { id:"twitch", username, stars: 0}; viewers.push(v); }
- console.log(viewers[v]);
-// viewers[v].stars = parseInt(viewers[v].stars) ;
-  viewers[v].stars +=delta;
-  //console.log(viewers[v].stars);
-  
-  //if (v.stars < 0) v.stars = 0;
-//  console.log(username);
-  
-  addStars2(viewers[v], 0 ,"twitch",0); 
-  saveViewers();
-  renderLeaderboard();
-  updateCurrentViewerLabel();
-  
-  logLive((delta>0?"+":"") + delta + "⭐ manual adjust for " + username);
+	
+	viewers[v].stars +=delta;
+	console.log(viewers[v].stars)
+	AddNew(viewers[v].platform,viewers[v].username,viewers[v].stars,viewers[v].stick);
+	renderLeaderboard();
+	updateCurrentViewerLabel();
+	logLive((delta>0?"+":"") + delta + "⭐ manual adjust for " + username);
 }
 function aggregated() {
   const map = {};
  
   viewers.forEach(v => {
  
-  
     const key = v.username.toLowerCase();
     if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
     map[key].stars += v.stars;
@@ -252,12 +245,12 @@ function renderLeaderboard() {
   const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
   const oldPos = {};
   oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
-  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,10);
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars);
   const rowMap = {};
   
   oldRows.forEach(r=>rowMap[r.dataset.id]=r);
   tbody.innerHTML = "";
-  console.log(viewers);
+  //console.log(viewers);
   
   sorted.forEach((u, i)=>{
     let row = rowMap[u.key];
@@ -295,9 +288,11 @@ function renderLeaderboard() {
 function updateCurrentViewerLabel() {
   const label = document.getElementById("current-viewer-label");
   if (!currentViewer) { label.textContent = "No viewer selected."; return; }
+  console.log(currentViewer);
+  
   const list = aggregated();
-  const entry = list.find(u => u.username.toLowerCase() === currentViewer.username.toLowerCase());
-  const total = entry ? entry.stars : 0;
+  const entry = list.findIndex(u => u.username === currentViewer.username);
+  const total = entry ? currentViewer.stars : 0;
   label.textContent = "Current: " + currentViewer.username + " – Total Stars (all platforms): " + total + "⭐";
 }
 function logLive(msg) {
