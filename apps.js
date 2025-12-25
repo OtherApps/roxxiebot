@@ -594,8 +594,9 @@ GiveVip(request,response,request.query.usr,request.query.to,request.query.sar,re
 }
 	)
 app.get('/vip',function (request,response){
+	var  streamers=request.query.streamer ?? "RoxxieToxxic";
 	
-	VipSave(request,response,request.query.name,request.query.stars,request.query.stickers);
+	VipSave(request,response,request.query.name,request.query.stars,request.query.stickers,streamers);
 	
 })
 
@@ -776,9 +777,10 @@ console.log(myObject);
 	}
 	
 }
-async function VipSave(request,response,usr,sar,stick){
-		
-var data = fs.readFileSync("vipboard2.json");
+async function VipSave(request,response,usr,sar,stick,streamer){
+
+console.log("Saving to:" +streamer+"_vipboard2.json");
+var data = fs.readFileSync(streamer+"_vipboard2.json");
 var myObject=[];
 var name=usr;
 var myObject = JSON.parse(data)
@@ -814,7 +816,7 @@ myObject.push(newData);
  }
 var newData2 = JSON.stringify(myObject);
 
-fs.writeFile("vipboard2.json", newData2, (err) => {
+fs.writeFile(streamer+"_vipboard2.json", newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("New data added");
