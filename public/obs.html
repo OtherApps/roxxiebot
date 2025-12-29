@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS Web Controller</title>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <!-- Load the OBS WebSocket library from CDN -->
+<script src="
+https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.7/dist/obs-ws.global.min.js
+"></script>
+ 
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .controls { display: flex; flex-direction: column; gap: 10px; max-width: 300px; }
+        button { padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #666; }
+        .status { margin-bottom: 20px; padding: 10px; border-radius: 4px; }
+        .connected { background: #2e7d32; }
+        .disconnected { background: #c62828; }
+    </style>
+</head>
+<body>
+
+    <h2>OBS Controller</h2>
+    <div id="status" class="status disconnected">Status: Disconnected</div>
+
+    <div class="controls">
+        <input type="password" id="obsPassword" placeholder="Enter OBS Password">
+        <button onclick="connectOBS()">Connect to OBS</button>
+        <hr>
+        <button onclick="startRecording()">Start Recording</button>
+        <button onclick="stopRecording()">Stop Recording</button>
+        <button onclick="toggleMute()">Toggle Mic Mute</button>
+    </div>
+<script src="main_functions.js"></script>
+    <script>
+		var gifts=null;
+		var temp; 
+		var lastposted =null; 
+		
+		var server="http://192.168.1.172:8080/";
+        const obs = new OBSWebSocket();
+        const statusDiv = document.getElementById('status');
+
+       
+		// fetch  gifts 
+		
+		
+getgifts();
+  
+window.setInterval(function() {
+			fetchChat("gamer_scotland");	
+			}, 10000);
+
+    </script>
+</body>
+</html>
