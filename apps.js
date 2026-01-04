@@ -51,7 +51,7 @@ ensureFile(checkname, '{}');
 var client_token=''
 require('discord-reply');
 const Discord = require('discord.js');
-const channelID='1277289516515852410';
+const channelID='';
 
 //console.log(checkname);
 
