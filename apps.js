@@ -12,14 +12,49 @@ const fetch = require("node-fetch");
 var jsonsave
 var found=false;
 const path2 = require('path');
-
+const date = new Date();
 console.log("Running");
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+var checkname= months[date.getMonth()]+"_"+"RoxxieToxxic_vipboard2.json";
 
 
-var client_token=''
+async function ensureFile(filePath, content = ''){ 
+const fs2 = require('fs').promises;
+const path2 = require('path');
+
+  try {
+    // 1. Ensure the parent directory exists first
+    const dir = path2.dirname(filePath);
+    await fs2.mkdir(dir, { recursive: true });
+
+    // 2. Create the file ONLY if it doesn't exist
+    // 'wx' flag: open for writing, fails if path exists
+    await fs2.writeFile(filePath, content, { flag: 'wx' });
+    console.log('File created successfully.');
+  } catch (err) {
+    if (err.code === 'EEXIST') {
+      console.log('File already exists. No action taken.');
+    } else {
+      console.error('An error occurred:', err);
+    }
+  }
+}
+{}
+// Usage
+ensureFile(checkname, '{}');
+
+
+var client_token='OTY4MTgzODQzMjc2MzQ5NTMx.GfLpjM.pbDHEWZbh17STY5H85n1IiWMrLfZd-YfuXhoVc'
 require('discord-reply');
 const Discord = require('discord.js');
 const channelID='1277289516515852410';
+
+//console.log(checkname);
+
 
 //Discord plugin stuff 
 const fs = require("fs");
@@ -225,7 +260,7 @@ else{
 }
 function TopSubs(req,res,usr,nums){
 	const fs = require('fs');
-	const date = new Date();
+	
 	const filePath = './public/'+date.getMonth()+'_TopSubs.txt';
 	const dataToAppend = usr+" "+nums +",";
 
@@ -779,8 +814,8 @@ console.log(myObject);
 }
 async function VipSave(request,response,usr,sar,stick,streamer){
 
-console.log("Saving to:" +streamer+"_vipboard2.json");
-var data = fs.readFileSync(streamer+"_vipboard2.json");
+console.log("Saving to:" +checkname);
+var data = fs.readFileSync(checkname);
 var myObject=[];
 var name=usr;
 var myObject = JSON.parse(data)
@@ -816,7 +851,7 @@ myObject.push(newData);
  }
 var newData2 = JSON.stringify(myObject);
 
-fs.writeFile(streamer+"_vipboard2.json", newData2, (err) => {
+fs.writeFile(checkname, newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("New data added");
@@ -827,7 +862,7 @@ function saveVipBoard(request,response,myObject,msg){
 	
 	var newData2 = JSON.stringify(myObject);
 
-fs.writeFile("vipboard.json", newData2, (err) => {
+fs.writeFile(checkname, newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("Status :"+msg );

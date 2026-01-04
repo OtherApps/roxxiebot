@@ -1,6 +1,6 @@
 var triggers_pulled="";
 var obstriggers ="";
-	const obs = new OBSWebSocket();
+const obs = new OBSWebSocket();
 
 var recordOnlyOnces= false;
 var stopOnlyOnce =false;
@@ -9,7 +9,7 @@ loadTriggers();
 
 
 
-async function updateMediaSource() {
+async function updateMediaSource(trigger) {
   try {
     // 1. Connect to OBS (default port 4455)
    	await obs.connect('ws://localhost:4455');
@@ -127,6 +127,7 @@ async function loadTriggers(){
 	obstriggers= data2.split("\r");
 	console.log("Got Triggers");
 	*/
+	
 	const data2="!brb,BRB\r!katie,katie\r!roxxie,roxxie\r!shana,shana\r!nathan,nathan"
 	obstriggers=data2.split("\r");
 	console.log("Loaded triggers");
