@@ -154,7 +154,7 @@ async function loadTriggers(){
 		
 	}
 	function singleLine(sub){
-console.log("here");
+	
 		
 		var x=0; 
 		var out = "<div style='chat'>"; 
@@ -197,8 +197,6 @@ else{
 			}
 			
 			else if ((timeParts[0]!=SHour)){
-				//	out="<div class=msg><font color='red'>"+userName+"</font> "+sub[x].comment +"</div><br>"
-					//console.log(" "+tims+" "+userName+" "+sub[x].comment);		
 				 console.log("Is mod "+sub[x]['broadcasterMod'] + " " )
 				}
 				else{
