@@ -1,0 +1,162 @@
+<html>
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+
+<script src="https://js.pusher.com/2.2/pusher.min.js"> </script> 
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/obs-websocket-js"></script>
+<script src="https://unpkg.com/obs-websocket-js"></script>
+
+<script src="twitch.js"></script>
+<script src="yn2.js"></script>
+
+<style>
+*{
+font-family: 'Nunito', sans-serif;
+font-size:21px;
+
+
+}
+
+.result {
+	top:20px;
+	left:40px;
+	width:600px;
+	height:90%;
+	font-size:14px;
+	position:absolute;
+	font-size:14px;
+	color:white;
+	padding-top:20px;
+	padding-left:20px;
+
+	overflow-x:hidden;
+
+	scrollbar-color: #007 #bada55;
+	border-radius:25px;
+	
+}
+
+
+.emote{
+	height:20px;
+	width:20px;
+}
+.msg{
+	width:90%;
+	word-wrap: break-word;
+	font-size:1.rem;
+	padding-top:10px;
+	padding-bottom:10px;
+	font-family: "Merriweather", serif;
+	font-weight: 900;
+	font-style: normal;
+	padding:10px;
+
+	border-style: solid;
+	border-color:black;
+	border-radius:25px;
+	scrollbar-color: #007 #bada55;
+	border-radius:25px;
+	color:green;
+	
+}
+	</style>
+	
+</head>
+<body>
+<div id="results" class="result" style="display:block;align:center;background-color:black"></div>
+<button onclick="StartOBSRecording()">Start Recording</button>
+
+<button onclick="updateMediaSource()">Stop Recording</button>
+
+
+
+<script>
+var StartOfTime=new Date(); 
+var SHour = StartOfTime.getHours(); 
+var SMin= StartOfTime.getMinutes(); 
+
+
+
+
+let emotes = {};
+var ScrollingDown =true;  
+let subBadges;
+
+var displayDiv =   document.getElementById("results")
+
+var lastupdate =""; 
+
+var obsONorOff; 
+var twUserName; 
+
+/*
+setInterval(function(){
+begin()},7000) 
+start(); */
+
+async function getData2(fname){
+
+		 var url ="http://localhost:8080/files=hangman_words"
+		 const response = await fetch(url);
+		 const data = await response.text();
+			console.log(data);	
+  
+}
+
+
+	  
+function goDown(){
+	
+	
+		console.log("going down"); 
+		window.setInterval(function() {
+			if(ScrollingDown !=false){
+		var elem = document.getElementById('results');
+		elem.scrollTop = elem.scrollHeight;
+		
+		}else{
+			
+			
+		}}, 1000);
+		
+
+					
+}
+goDown();
+
+window.setInterval(function() {
+			if(ScrollingDown !=false){
+		var elem = document.getElementById('results');
+		elem.scrollTop = elem.scrollHeight;
+		}else{
+			
+			
+		}}, 1000);
+		
+
+</script>
+
+
+<br>
+<div id="tops" class="results" style= "display:block;align:center;display:none">
+
+<div style="position:absolute;right:20px;color:green; top:10%;padding:20px; width:500px; ;font-size:30px ;border: white solid 5px;border-style:inline; padding:20px; item-align:center;display:none;" id='hangmanDiv'>
+    <div class="wrapper" >
+
+      <div class="alphabetButton" id="alphabetButtons"></div>
+      <p id="categoryName"></p>
+      <div id="hold"></div>
+      <p id="mylives"></p>
+      
+      <canvas id="stickman" style="width:300px;height:200px;"
+        >This Text will show if the Browser does NOT support HTML5 Canvas
+        tag</canvas>
+
+</body>
+</html>
