@@ -48,7 +48,7 @@ const path2 = require('path');
 ensureFile(checkname, '{}');
 
 
-var client_token='OTY4MTgzODQzMjc2MzQ5NTMx.GfLpjM.pbDHEWZbh17STY5H85n1IiWMrLfZd-YfuXhoVc'
+var client_token=''
 require('discord-reply');
 const Discord = require('discord.js');
 const channelID='1277289516515852410';
