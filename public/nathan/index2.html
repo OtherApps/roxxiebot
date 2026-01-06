@@ -29,7 +29,8 @@ fixurl ="https://roxxiebot.ngrok.app/raw?url="
 //-->
 </script>
 <script src="functions.js"></script>
-
+<script src="websockets.js"></script>
+<script src="YnChat.js"></script>
     <link rel="stylesheet" href="main.css">
 <style>
 
@@ -48,10 +49,129 @@ fixurl ="https://roxxiebot.ngrok.app/raw?url="
   <strong>Christmas Edition:</strong> same Stars logic, cozy festive skin. Works for Twitch / TikTok / YouNow, leaderboard shows combined Stars.
 </p>
 
+<div class="row">
+  <div class="card">
+    <h2>Viewer Selector</h2>
+    <div class="row">
+      <div style="flex:1; min-width:160px;">
+        <label>Platform
+          <select id="platform-select">
+            <option value="twitch">Twitch</option>
+            <option value="tiktok">TikTok</option>
+            <option value="younow">YouNow</option>
+          </select>
+        </label>
+      </div>
+      <div style="flex:2; min-width:200px;">
+        <label>Username
+          <input id="username-input" type="text" placeholder="viewer name" />
+        </label>
+		
+		
+      </div>
+    </div>
+    <button class="btn" id="ensure-viewer-btn">Select / Create Viewer</button>
+    <p id="current-viewer-label" class="small-note">No viewer selected.</p>
+    <label style="margin-top:6px; display:flex; align-items:center; gap:6px; font-size:13px;">
+      <input type="checkbox" id="double-stars-toggle" />
+      Double Stars Mode (Santa’s Double Rewards 🎅 x2)
+    </label>
+	
+  </div>
+
+  <div class="card">
+  <script>
+ function showHideDiv(){
+ 
+   var content =document.getElementById("subs");
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }}
+</script>	
+ <center><button class="btn" onclick="showHideDiv();">Gifted subcriptions</button></center>
+  <script>
+ 
+  </script>
+  <div class="card" id="subs">
+    <h2>Subs & Gifts</h2>
+    <p class="small-note">
+      Use for subs / gifts across all platforms. (Auto Twitch logic can sit on top of this later.)
+    </p>
+    <button class="btn" data-event="tier1-sub">Tier 1 Sub (+10⭐)</button>
+    <button class="btn" data-event="tier2-sub">Tier 2 Sub (+20⭐)</button>
+    <button class="btn" data-event="tier3-sub">Tier 3 Sub (+35⭐)</button>
+    <br />
+    <button class="btn" data-event="gift-sub">Gifted Sub (+10⭐)</button>
+    <button class="btn" data-event="wishlist">Wishlist / Physical Gift (+10⭐)</button>
+	<br>
+	
+</div>
+
+  </div>
+</div>
+
+
+<div class="row">
+<div class="card">
+
+	<label>
+		Custom Stars
+			<input type="text" id="CustomStar" width="40px" />
+		</label>
+		
+		<label>
+		Custom Stickers
+			<input type="text" id="CustomStickers"/>
+		
+		</label>
+	<center><button class="btn" onclick="specialAdd()">Custom Add</button></center>
+</div>
+
+
+  <div class="card">
+    <h2>Bits / Coins & Perks</h2>
+    <p class="small-note">
+      Twitch bits, TikTok coins, and top gifter perks. Great for holiday hype trains.
+    </p>
+    <button class="btn" data-event="bits-1000">1000 Bits (+10⭐)</button>
+    <button class="btn" data-event="coins-1000">1000 Coins (+10⭐)</button>
+    <br />
+    <button class="btn" data-event="top-sub-gifter">Top Sub Gifter (+5⭐)</button>
+    <button class="btn" data-event="top-tiktok-gifter">Top TikTok Gifter (+5⭐)</button>
+    <button class="btn" data-event="top-bit-giver">Top Bit Giver (+5⭐)</button>
+  </div>
+
+  <div class="card">
+    <h2>Games / Mod Actions</h2>
+    <p class="small-note">
+      Beat the Intro, Discord boosts, jumpscares, quiz answers, and more holiday chaos.
+    </p>
+    <button class="btn" data-event="beat-intro-win">Beat Intro Winner (+4⭐)</button>
+    <button class="btn" data-event="beat-intro-second">Beat Intro 2nd (+3⭐)</button>
+    <br />
+    <button class="btn" data-event="discord-boost">Discord Boost (+3⭐)</button>
+    <button class="btn" data-event="jumpscare">Jumpscare (+2⭐)</button>
+    <br />
+    <button class="btn" data-event="correct-answer">Correct Answer (+2⭐)</button>
+  </div>
+</div>
+
+<div class="card" style="max-width:1040px;">
+  <h2>Session Log</h2>
+  <p class="small-note">
+    This is just a local log for this session (not connected to Twitch yet in this Christmas skin). Great for mods to track what they clicked.
+  </p>
+  <pre id="live-log"></pre>
+</div>
+
 <div class="card" style="max-width:1040px;">
   <div class="card-header-row">
     <h2 style="margin:0;">Leaderboard (Top 10 – Combined Stars)</h2>
-  
+    <button class="btn btn-ghost" id="reset-stars-btn">
+      🎄 Reset All Stars
+    </button>
   </div>
   <p class="small-note">
     If someone rockets from 3rd to 1st place, their row will gracefully slide up like a festive arrivals board, pushing others down.
@@ -63,98 +183,13 @@ fixurl ="https://roxxiebot.ngrok.app/raw?url="
         <th>Username</th>
         <th>Stars</th>
 		<th>Stickers</th>
-        
+        <th>Adjust</th>
       </tr>
     </thead>
     <tbody id="leaderboard-body"></tbody>
   </table>
 </div>
-<script>
-<!--
-
-function aggregated() {
-  const map = {};
- 
-  viewers.forEach(v => {
- 
-    const key = v.username.toLowerCase();
-    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
-    map[key].stars += v.stars;
-  });
- //console.log(Object.values(map));
-  
-  
-  
-  return Object.values(map);
-}
-
-
-function loadViewers(data) {
-console.log("Loading viewers");
-
-	const raw=data;
-	if (!raw) { viewers = []; return; }
-		try { viewers = JSON.parse(raw) || []; } catch(e) { console.log(e);viewers = []; }
-		
-		viewers.forEach(v => { 
-		if (typeof v.stars === "undefined")
-		{v.stars = 0}else{
-		v.stars=parseInt(v.stars);
-		
-		};
-		if(isNaN(v.stickers)){
-		v.stickers=0}
-		});
-	
-	//adjustNames(viewers);
-	renderLeaderboard()
-  
-}
-
-function renderLeaderboard() {
-//loadJson(); 
- const tbody = document.getElementById("leaderboard-body");
-  const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
-  const oldPos = {};
-  oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
-  const sorted = aggregated().sort((a,b)=>b.stars-a.stars);
-  const rowMap = {};
-  
-  oldRows.forEach(r=>rowMap[r.dataset.id]=r);
-  tbody.innerHTML = "";
-  //console.log(viewers);
-  
-  sorted.forEach((u, i)=>{
-    let row = rowMap[u.key];
-    if (!row) { row = document.createElement("tr"); row.dataset.id = u.key; }
-    else { row.innerHTML = ""; }
-	
-	const ix=viewers.findIndex(p => p.username === u.username);
-	
-    row.innerHTML = `
-      <td>${i+1}</td>
-      <td>${u.username}</td>
-      <td>${u.stars}</td>
-	  <td>${viewers[ix].stickers}</td>
-    `;
-    tbody.appendChild(row);
-  });
-  const newRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
-  newRows.forEach(row=>{
-    const id=row.dataset.id;
-    if (oldPos[id]!=null){
-      const newY=row.getBoundingClientRect().top;
-      const delta=oldPos[id]-newY;
-      if (Math.abs(delta)>2){
-        row.style.transform=`translateY(${delta}px)`;
-        row.classList.add("moved");
-        requestAnimationFrame(()=> row.style.transform="" );
-      }
-    }
-  });
-}
-//-->
-</script>
+<script src="everything.js"></script>
 <script>
 let viewers = [];
 let doubleStars = false;
@@ -162,7 +197,7 @@ let currentViewer = null;
 
 loadJson();
 //renderLeaderboard();
-//updateCurrentViewerLabel();
+updateCurrentViewerLabel();
 </script>
 
 </body>
