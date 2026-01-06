@@ -36,28 +36,21 @@ fixurl ="https://roxxiebot.ngrok.app/raw?url="
 </style>
 </head>
 <body>
-<center>
-<div class="snow">
-</div>
-<div>
-<h1 style="display:inline;">
+<div class="snow"></div>
 
+<h1>
   <span class="emoji">🎄</span>
   RoxxieBot – Stars System
   <span class="emoji">⭐</span>
   <span class="emoji">🎁</span>
-
 </h1>
-<div>
-
 <p class="small-note">
   <strong>Christmas Edition:</strong> same Stars logic, cozy festive skin. Works for Twitch / TikTok / YouNow, leaderboard shows combined Stars.
 </p>
 
 <div class="card" style="max-width:1040px;">
-  <div class="card-header-row' style='display:inline'">
-  <center>  <h2 style="margin:0;">Leaderboard (Top 10 – Combined Stars)</h2></center>
-  
+  <div class="card-header-row">
+    <h2 style="margin:0;">Leaderboard (Top 10 – Combined Stars)</h2>
   
   </div>
   <p class="small-note">
@@ -166,16 +159,11 @@ function renderLeaderboard() {
 let viewers = [];
 let doubleStars = false;
 let currentViewer = null;
-window.setInterval(function() {
-			
-			loadJson();
-			
-			}, 10000);
 
 loadJson();
+//renderLeaderboard();
+//updateCurrentViewerLabel();
 </script>
-</center>
-
 
 </body>
 </html>
