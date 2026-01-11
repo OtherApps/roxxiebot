@@ -13,6 +13,10 @@ var jsonsave
 var found=false;
 const path2 = require('path');
 const date = new Date();
+const yad=date.getDate();
+
+
+
 console.log("Running");
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -20,11 +24,13 @@ const months = [
 ];
 
 var checkname= months[date.getMonth()]+"_"+"RoxxieToxxic_vipboard2.json";
+var hist="history_"+checkname;
 
 
-async function ensureFile(filePath, content = ''){ 
+async function ensureFile(filePath, content){ 
 const fs2 = require('fs').promises;
 const path2 = require('path');
+content=JSON.stringify(content);
 
   try {
     // 1. Ensure the parent directory exists first
@@ -45,13 +51,20 @@ const path2 = require('path');
 }
 {}
 // Usage
-ensureFile(checkname, '{}');
+ const fdate2=months[date.getMonth()]+"-"+ date.getDate 
+const defaultName=[{
+username:"test",
+  stars:0,
+  stickers:0,
+  etad:0
+}]
+ensureFile(checkname,defaultName );
+ensureFile(hist,defaultName);
 
-
-var client_token=''
+var client_token='';
 require('discord-reply');
 const Discord = require('discord.js');
-const channelID='';
+const channelID='1277289516515852410';
 
 //console.log(checkname);
 
@@ -812,19 +825,55 @@ console.log(myObject);
 	}
 	
 }
+async function saveHistory(data){
+	//console.log(data);
+	
+	var data2 = fs.readFileSync(hist);
+	var myObject = JSON.parse(data2)||[{}];
+	
+	myObject.push(data);	
+	var newData2 =JSON.stringify(myObject)
+	fs.writeFile(hist, newData2, (err) => {
+  // Error checking
+  if (err) throw err;
+  console.log("Logged added");
+  
+//response.send("New data added");
+});
+
+
+}
 async function VipSave(request,response,usr,sar,stick,streamer){
 
 console.log("Saving to:" +checkname);
 var data = fs.readFileSync(checkname);
+var fdate=months[date.getMonth()] + "-" + date.getDate();
+
 var myObject=[];
 var name=usr;
-var myObject = JSON.parse(data)
-const foundName = myObject.findIndex(p => p.username === usr);
+myObject = JSON.parse(data)||[]
+var foundName;
+if((typeof myObject==='object') && (myObject !==null))
+{
+ foundName= myObject.findIndex(p => p.username === usr);
+}
+else{
+	foundName =-1
+	
+}
  if(foundName>-1){
 	 // update 
 myObject[foundName].stars =sar;	 
 myObject[foundName].stickers =stick;	 
+myObject[foundName].etad= fdate; 
+ let newData2 = {
+  username:usr,
+  stars:sar,
+  stickers:stick,
+  etad:fdate
+};
 let newData= myObject;
+ saveHistory(newData2);
  }
  else{
 // add a new name
@@ -832,9 +881,11 @@ let newData= myObject;
  let newData = {
   username:usr,
   stars:sar,
-  stickers:stick
+  stickers:stick,
+  etad:fdate
 };
-console.log(newData);
+//console.log(newData);
+ saveHistory(newData);
 if(Array.isArray(myObject)){
 
 		console.log("Is an array"); 
@@ -851,6 +902,7 @@ myObject.push(newData);
  }
 var newData2 = JSON.stringify(myObject);
 
+ 
 fs.writeFile(checkname, newData2, (err) => {
   // Error checking
   if (err) throw err;
