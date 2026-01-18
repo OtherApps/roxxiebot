@@ -4,10 +4,27 @@
 <head>
 <meta charset="UTF-8" />
 <title>RoxxieBot – Stars Overlay (Christmas)</title>
-	        <link rel="stylesheet" type="text/css" href="obscss.css">
+	<link rel="stylesheet" type="text/css" href="obscss.css">
 <style>
 
 </style>
+<script>
+<!--
+//var fixurl = "http://192.168.1.172:8080/raw?url=";
+var fixurl,serverURL;
+
+console.log(window.location.hostname);
+if(window.location.hostname !="roxxiebot.ngrok.app")
+{
+serverURL= "http://192.168.1.172:8080/"
+fixurl = "http://192.168.1.172:8080/raw?url=";
+}
+else{
+serverURL= "https://roxxiebot.ngrok.app/"; 
+fixurl= "https://roxxiebot.ngrok.app/raw?url="; 
+}
+//-->
+</script>
 <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
 <script src="YnChatOnline.js"></script>
 </head>
@@ -17,7 +34,7 @@
 </div>
 <div class="snow"></div>
 <div class="overlay-wrapper">
-  <div class="board" id="scoreboard" style="display:none" >
+  <div class="board" id="scoreboard" >
     <div class="board-header">
       <div class="title" style="200px;text-align:center;">
 	  
@@ -40,10 +57,8 @@
 </div>
 
 <script>
+
 let viewers = [];
-//const serverURL= "http://192.168.1.172:8080/"
-const serverURL= "https://swan-tight-porpoise.ngrok-free.app/"; 
-//https://swan-tight-porpoise.ngrok-free.app/public/
 
 function fadeOut(element) {
     // Start opacity at its current computed value or 1 if not set
@@ -77,8 +92,10 @@ function fadeIn(element) {
 
 async function loadJson(){
 	  try {
-        const response = await fetch(serverURL+'vipboard.json');
+        const response = await fetch(serverURL+'January_RoxxieToxxic_vipboard2.json');
         const data = await response.text();
+		console.log(data);
+		
 		loadViewers(data);
 	  
     } catch (error) {
@@ -118,15 +135,30 @@ function loadViewers(data) {
 
 function aggregated() {
   const map = {};
+	
+	var temp = null; 
+	var listofnames=""; 
+  
   viewers.forEach(v => {
     const key = v.username.toLowerCase();
-    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
-    map[key].stars += v.stars;
+  if (!map[key]) map[key] = { key, username: v.username, stars:0};
+	if(listofnames.includes(v.username))
+	{
+		map[key].stars = parseInt(v.stars) +parseInt(map[key].stars);
+		}
+	else
+	{
+		listofnames=listofnames +","+v.username; 
+		map[key].stars = v.stars;
+		}
+  //map[key].stars = v.stars;
   });
   return Object.values(map);
 }
 
 function renderLeaderboard() {
+//console.log(viewers);
+
   const tbody = document.getElementById("leaderboard-body");
   const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
   const oldPos = {};
@@ -146,7 +178,8 @@ function renderLeaderboard() {
     } else {
       row.innerHTML = "";
     }
-	u.stars=parseInt(u.stars);
+	//u.stars=parseInt(u.stars);
+	console.log(u.stars);
 	
     row.innerHTML = `
       <td class="rank">${i+1}</td>
@@ -178,7 +211,7 @@ loadJson()
 // Poll every 2 seconds for changes from the dashboard
 setInterval(() => {
 //  loadViewers();
-	loadJson()
+//	loadJson()
   //renderLeaderboard();
 }, 2000);
 
@@ -275,6 +308,7 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
   
 }
 beginFun("roxxietoxxic")
+
 </script>
 
 
