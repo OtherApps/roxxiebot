@@ -12,7 +12,10 @@
 <!--
 //var fixurl = "http://192.168.1.172:8080/raw?url=";
 var fixurl,serverURL;
-
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	
+var tsoh =  urlParams.get("streamer") ?? "RoxxieToxxic";
 console.log(window.location.hostname);
 if(window.location.hostname !="roxxiebot.ngrok.app")
 {
@@ -27,6 +30,8 @@ fixurl= "https://roxxiebot.ngrok.app/raw?url=";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
 <script src="YnChatOnline.js"></script>
+<script src="must.js"></script>
+
 </head>
 <body >
 <div>
@@ -34,8 +39,8 @@ fixurl= "https://roxxiebot.ngrok.app/raw?url=";
 </div>
 <div class="snow"></div>
 <div class="overlay-wrapper">
-  <div class="board" id="scoreboard" >
-    <div class="board-header">
+  <div class="board" id="scoreboard" style="display:none">
+    <div class="board-header" >
       <div class="title" style="200px;text-align:center;">
 	  
         🎄Top Stars⭐
@@ -59,6 +64,7 @@ fixurl= "https://roxxiebot.ngrok.app/raw?url=";
 <script>
 
 let viewers = [];
+const doubleStars=false;
 
 function fadeOut(element) {
     // Start opacity at its current computed value or 1 if not set
@@ -243,7 +249,15 @@ function beginFun(TwitchChannel){
 	makeItVisible();
 	
 	}
-	
+	else if (command==="add"){
+	var data = message.split(" ");
+	console.log(data)
+	const viewer = ensureViewer("Twitch", data[0]);
+	addStars2 (viewer, data[1],"YouNow",data[2])
+	/*
+	const viewer = ensureViewer("younow", usr);
+	*/
+	}
   } 
   
 	}
