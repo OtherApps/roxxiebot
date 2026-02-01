@@ -1,1 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
 
+   <link rel="stylesheet" href="./nathan/main.css">
+<title>History</title>
+
+
+<script>
+<!--
+//var fixurl = "http://192.168.1.172:8080/raw?url=";
+var fixurl,serverURL;
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer") ?? "RoxxieToxxic";
+	
+	
+console.log(window.location.hostname);
+if(window.location.hostname !="roxxiebot.ngrok.app")
+{
+serverURL= "http://192.168.1.172:8080/"
+fixurl = "http://192.168.1.172:8080/raw?url=";
+}
+else{
+serverURL= "https://roxxiebot.ngrok.app/"; 
+fixurl= "https://roxxiebot.ngrok.app/raw?url="; 
+}
+//-->
+</script>
+</head>
+<body>
+ <table>
+    <thead>
+      <tr>
+        
+        <th>Username</th>
+        <th>Stars</th>
+		<th>Stickers</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body"></tbody>
+  </table>
+  
+<script>
+function aggregated() {
+  const map = {};
+ 
+  viewers.forEach(v => {
+ 
+    const key = v.username.toLowerCase();
+    if (!map[key]) map[key] = { key, username: v.username,etad:v.etad,stars: 0 };
+    map[key].stars += v.stars;
+  });
+ 
+     
+ // map=viewers;
+  
+  return Object.values(viewers);
+}
+function renderLeaderboard() {
+//loadJson(); 
+ const tbody = document.getElementById("leaderboard-body");
+  const oldRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  const oldPos = {};
+  oldRows.forEach(r => oldPos[r.dataset.id] = r.getBoundingClientRect().top);
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars);
+  const rowMap = {};
+  
+  oldRows.forEach(r=>rowMap[r.dataset.id]=r);
+  tbody.innerHTML = "";
+  console.log(sorted);
+  
+  sorted.forEach((u, i)=>{
+    let row = rowMap[u.key];
+    if (!row) { row = document.createElement("tr"); row.dataset.id = u.key; }
+    else { row.innerHTML = ""; }
+	
+	const ix=viewers.findIndex(p => p.username === u.username);
+	
+    row.innerHTML = `
+      <td>${u.username}</td>
+      <td>${u.stars}</td>
+	  <td>${u.stickers}</td>
+	  <td>${u.etad}</td>
+    `;
+    tbody.appendChild(row);
+  });
+  const newRows = Array.from(tbody.querySelectorAll("tr[data-id]"));
+  newRows.forEach(row=>{
+    const id=row.dataset.id;
+    if (oldPos[id]!=null){
+      const newY=row.getBoundingClientRect().top;
+      const delta=oldPos[id]-newY;
+      if (Math.abs(delta)>2){
+        row.style.transform=`translateY(${delta}px)`;
+        row.classList.add("moved");
+        requestAnimationFrame(()=> row.style.transform="" );
+      }
+    }
+  });
+}
+function loadViewers(data) {
+console.log("Loading viewers");
+
+	const raw=data;
+	if (!raw) { viewers = []; return; }
+		try { viewers = JSON.parse(raw) || []; } catch(e) { console.log(e);viewers = []; }
+		
+		viewers.forEach(v => { 
+		if (typeof v.stars === "undefined")
+		{v.stars = 0}else{
+		v.stars=parseInt(v.stars);
+		
+		};
+		if(isNaN(v.stickers)){
+		v.stickers=0}
+		});
+	console.log(viewers);
+	
+	//adjustNames(viewers);
+	renderLeaderboard()
+  
+}
+
+async function getData() {
+  try {
+  var urls = serverURL+ "/history_February_RoxxieToxxic_vipboard2.json";
+  
+    const response = await fetch(urls);
+    
+    // Check if the request was successful (status in the range 200-299)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.text();
+   
+   loadViewers(data);
+   
+	
+	
+  } catch (error) {
+    console.error('Fetch error:', error.message);
+  }
+  }
+  
+  getData();
+  
+  //-->
+  </script>
+  
+  </body>
+  </html>
+  
