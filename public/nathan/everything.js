@@ -10,7 +10,7 @@ if(currentViewer!=null){
 
 var rtss = document.getElementById("CustomStar").value||0;
 var stixkers=document.getElementById("CustomStickers").value||0;
-//console.log(rtss + " " + stixkers)
+
 
 addStars2(currentViewer, rtss, "Custom stars" ,stixkers);
 }
@@ -81,8 +81,9 @@ function addStars2(v, base, sourceLabel,stick) {
   //console.log();
   
   if (v.stars < 0) v.stars = 0;
-  //console.log(stick);
-	AddNew(v.platform,v.username,v.stars,v.stickers);
+  v.id="twitch-form";
+ // console.log(v);
+	AddNew(v.id,v.username,v.stars,v.stickers);
 	//console.log(v);
 
   renderLeaderboard();
