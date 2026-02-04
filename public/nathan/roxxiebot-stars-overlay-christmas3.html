@@ -14,7 +14,16 @@
 var fixurl,serverURL;
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString); 
-	
+
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+const date = new Date();
+
+var checkname= months[date.getMonth()]+"_"+"RoxxieToxxic_vipboard2.json";
+
+
 var tsoh =  urlParams.get("streamer") ?? "RoxxieToxxic";
 console.log(window.location.hostname);
 if(window.location.hostname !="roxxiebot.ngrok.app")
@@ -43,7 +52,7 @@ fixurl= "https://roxxiebot.ngrok.app/raw?url=";
     <div class="board-header" >
       <div class="title" style="200px;text-align:center;">
 	  
-        🎄Top Stars⭐
+        ⭐Top Stars⭐
 		
       </div>
      
@@ -98,7 +107,7 @@ function fadeIn(element) {
 
 async function loadJson(){
 	  try {
-        const response = await fetch(serverURL+'January_RoxxieToxxic_vipboard2.json');
+        const response = await fetch(serverURL+checkname);
         const data = await response.text();
 		console.log(data);
 		
@@ -226,6 +235,12 @@ setInterval(() => {
 function beginFun(TwitchChannel){
 
 	ComfyJS.onResub=(user, message, subtier, months, cumulativeMonths, streakMonths, data) =>{
+		
+			const viewer = ensureViewer("Twitch", user);
+			viewer.stars = parseInt(viewer.stars+ 10);
+			console.log(viewer);
+			
+	
 		}
 		/**/
 		ComfyJS.onSub=( user, message, subTierInfo, extra )=>{
@@ -238,6 +253,13 @@ function beginFun(TwitchChannel){
 		
 		ComfyJS.onSubMysteryGift =( gifterUser, numbOfSubs, senderCount, subTierInfo, extra ) =>{
 			
+			
+		
+			const viewer = ensureViewer("Twitch", gifterUser);
+			
+			viewer.stars = parseInt(viewer.stars+ (numbOfSubs*10));
+			console.log(viewer);	
+			//SubIt(gifterUser + " gifted  " +numbOfSubs + " subs " ); 
 			//Fix this  above
 		}
 		
