@@ -16,17 +16,17 @@ const months = [
 ];
 const date = new Date();
 
-var checkname= months[date.getMonth()]+"_"+"RoxxieToxxic_vipboard2.json";
 
-//var fixurl = "http://192.168.1.172:8080/raw?url=";
 var fixurl,serverURL;
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString); 
 	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
-	var tsoh =  urlParams.get("streamer") ?? "RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
 	
-	
-console.log(window.location.hostname);
+var checkname= months[date.getMonth()]+"_"+tsoh+"_vipboard2.json";
+
+
+console.log(checkname);
 if(window.location.hostname !="roxxiebot.ngrok.app")
 {
 serverURL= "http://192.168.1.172:8080/"
