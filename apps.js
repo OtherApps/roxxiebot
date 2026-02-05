@@ -61,7 +61,7 @@ username:"test",
 ensureFile(checkname,defaultName );
 ensureFile(hist,defaultName);
 
-var client_token='';
+var client_token=''
 require('discord-reply');
 const Discord = require('discord.js');
 const channelID='1277289516515852410';
@@ -79,7 +79,7 @@ app.use((req, res, next) => {
 app.listen(8080);
 
 app.get('/', (req, res) => {
-    res.redirect('./public/setup.html');
+    res.redirect('./public/nathan/?offline=true');
 });
 
 // https://api.younow.com/php/api/channel/getSubscribers/channelId=59079307/userId=59079307
@@ -643,8 +643,9 @@ GiveVip(request,response,request.query.usr,request.query.to,request.query.sar,re
 	)
 app.get('/vip',function (request,response){
 	var  streamers=request.query.streamer ?? "RoxxieToxxic";
+	var platform = request.query.di?? "twitch";
 	
-	VipSave(request,response,request.query.name,request.query.stars,request.query.stickers,streamers);
+	VipSave(request,response,request.query.name,request.query.stars,request.query.stickers,streamers,platform);
 	
 })
 
@@ -765,6 +766,7 @@ function writeLogTest(username,ids){
 );
 }
 async function GiveVip(request,response,usr,to,sar,stick){
+	// update name part
 	
 	var data = fs.readFileSync("vipboard.json");
 	var myObject=[];
@@ -791,7 +793,7 @@ console.log(myObject);
 				//console.log(myObject);
 				//response.send("Updated");
 			
-			saveVipBoard(request,response,myObject,"Updated");
+			saveVipBoard(request,response,myObject,"Updated",checkname2);
 
 							}
 			else{
@@ -807,7 +809,7 @@ console.log(myObject);
 				//console.log(myObject);
 				//response.send("Added new ");
 				
-			saveVipBoard(request,response,myObject,"Added New");
+			saveVipBoard(request,response,myObject,"Added New",checkname2);
 			}
 			
 		}
@@ -843,15 +845,42 @@ async function saveHistory(data){
 
 
 }
-async function VipSave(request,response,usr,sar,stick,streamer){
+async function VipSave(request,response,usr,sar,stick,streamer,plat){
 
-console.log("Saving to:" +checkname);
-var data = fs.readFileSync(checkname);
+var checkname2= months[date.getMonth()]+"_"+streamer+"_vipboard2.json";
+var hist2="history_"+checkname2;
+ensureFile(checkname2,defaultName );
+ensureFile(hist2,defaultName);
+console.log("Saving to:" +checkname2);
+try{
+	var data = fs.readFileSync(checkname2);
+	VipSave2(request,response,usr,sar,stick,streamer,plat)
+
+}
+catch (err) {
+    // Handles errors like file not found or permission issues
+    console.error('Error reading file:', err)
+	response.send(err);
+	
+  }
+
+
+}
+async function VipSave2(request,response,usr,sar,stick,streamer,plat){
+
+
+var checkname2= months[date.getMonth()]+"_"+streamer+"_vipboard2.json";
+var hist2="history_"+checkname2;
+ensureFile(checkname2,defaultName );
+ensureFile(hist2,defaultName);
+
+console.log("Saving to:" +checkname2);
+var data = fs.readFileSync(checkname2);
 var fdate=months[date.getMonth()] + "-" + date.getDate();
 
 var myObject=[];
 var name=usr;
-myObject = JSON.parse(data)||[]
+myObject = JSON.parse(data)
 var foundName;
 if((typeof myObject==='object') && (myObject !==null))
 {
@@ -866,14 +895,16 @@ else{
 myObject[foundName].stars =sar;	 
 myObject[foundName].stickers =stick;	 
 myObject[foundName].etad= fdate; 
+myObject[foundName].id=plat;
  let newData2 = {
   username:usr,
   stars:sar,
   stickers:stick,
-  etad:fdate
+  etad:fdate,
+  id:plat
 };
 let newData= myObject;
- saveHistory(newData2);
+ //saveHistory(newData2);
  }
  else{
 // add a new name
@@ -882,10 +913,11 @@ let newData= myObject;
   username:usr,
   stars:sar,
   stickers:stick,
-  etad:fdate
+  etad:fdate,
+  id:plat
 };
-//console.log(newData);
- saveHistory(newData);
+console.log(newData);
+ //saveHistory(newData);
 if(Array.isArray(myObject)){
 
 		console.log("Is an array"); 
@@ -903,18 +935,18 @@ myObject.push(newData);
 var newData2 = JSON.stringify(myObject);
 
  
-fs.writeFile(checkname, newData2, (err) => {
+fs.writeFile(checkname2, newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("New data added");
 });
 
 }
-function saveVipBoard(request,response,myObject,msg){
+function saveVipBoard(request,response,myObject,msg,streamdb){
 	
 	var newData2 = JSON.stringify(myObject);
 
-fs.writeFile(checkname, newData2, (err) => {
+fs.writeFile(streamdb, newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("Status :"+msg );
