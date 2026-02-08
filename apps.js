@@ -71,6 +71,8 @@ const channelID='1277289516515852410';
 
 //Discord plugin stuff 
 const fs = require("fs");
+app.use(express.json()); 
+
 app.use(express.static('./'));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -81,7 +83,12 @@ app.listen(8080);
 app.get('/', (req, res) => {
     res.redirect('./public/nathan/?offline=true');
 });
-
+app.post('/data/', (req, res) => {
+	console.log(req.body);
+	
+    res.send("Thank you!");
+	
+});
 // https://api.younow.com/php/api/channel/getSubscribers/channelId=59079307/userId=59079307
 app.get("/getSubscribers/:ids",function(req,res){
 	
@@ -641,11 +648,13 @@ GiveVip(request,response,request.query.usr,request.query.to,request.query.sar,re
 	
 }
 	)
-app.get('/vip',function (request,response){
+app.post('/vip',function (request,response){
 	var  streamers=request.query.streamer ?? "RoxxieToxxic";
 	var platform = request.query.di?? "twitch";
 	
-	VipSave(request,response,request.query.name,request.query.stars,request.query.stickers,streamers,platform);
+//console.log(request.body.name);	
+
+VipSave(request,response,request.body.name,request.body.stars,request.body.stickers,streamers,platform);
 	
 })
 
