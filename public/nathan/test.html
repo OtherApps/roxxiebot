@@ -36,6 +36,32 @@ else{
 serverURL= "https://roxxiebot.ngrok.app/"; 
 fixurl= "https://roxxiebot.ngrok.app/raw?url="; 
 }
+
+async function startUp(){
+
+const data3 = {streamer:tsoh};
+	
+	
+	  try {
+        const response = await fetch(serverURL+"test",{
+			method: 'POST', // Specify the method
+		
+		headers: {
+        'Content-Type': 'application/json', // Required for JSON
+					},
+		body: JSON.stringify(data3)});
+		
+        const output = await response.text();
+		
+		console.log(output);
+		
+	  
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+startUp();
+
 //-->
 </script>
 <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
