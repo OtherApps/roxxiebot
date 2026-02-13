@@ -81,12 +81,13 @@ app.use((req, res, next) => {
 app.listen(8080);
 app.post('/test',(req,res)=>{
 
-var  streamers=request.body.streamer ?? "RoxxieToxxic";
+var  streamers=req.body.streamer ?? "RoxxieToxxic";
 var checkname2= months[date.getMonth()]+"_"+streamers+"_vipboard2.json";
-var hist2="history_"+checkname;
-ensureFile(checkname2,defaultName );
-ensureFile(hist2,defaultName);
+var hist2="history_"+checkname2;
 	
+	ensureFile(checkname2,defaultName );
+	ensureFile(hist2,defaultName);
+	res.send("Thank you!");
 })
 app.get('/', (req, res) => {
     res.redirect('./public/nathan/?offline=true');
