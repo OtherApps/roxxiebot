@@ -79,7 +79,15 @@ app.use((req, res, next) => {
   next();
 });
 app.listen(8080);
+app.post('/test',(req,res)=>{
 
+var  streamers=request.body.streamer ?? "RoxxieToxxic";
+var checkname2= months[date.getMonth()]+"_"+streamers+"_vipboard2.json";
+var hist2="history_"+checkname;
+ensureFile(checkname2,defaultName );
+ensureFile(hist2,defaultName);
+	
+})
 app.get('/', (req, res) => {
     res.redirect('./public/nathan/?offline=true');
 });
@@ -649,8 +657,8 @@ GiveVip(request,response,request.query.usr,request.query.to,request.query.sar,re
 }
 	)
 app.post('/vip',function (request,response){
-	var  streamers=request.query.streamer ?? "RoxxieToxxic";
-	var platform = request.query.di?? "twitch";
+	var  streamers=request.body.streamer ?? "RoxxieToxxic";
+	var platform = request.body.di?? "twitch";
 	
 //console.log(request.body.name);	
 
@@ -836,15 +844,15 @@ console.log(myObject);
 	}
 	
 }
-async function saveHistory(data){
+async function saveHistory(data,db){
 	//console.log(data);
 	
-	var data2 = fs.readFileSync(hist);
+	var data2 = fs.readFileSync(db);
 	var myObject = JSON.parse(data2)||[{}];
 	
 	myObject.push(data);	
 	var newData2 =JSON.stringify(myObject)
-	fs.writeFile(hist, newData2, (err) => {
+	fs.writeFile(db, newData2, (err) => {
   // Error checking
   if (err) throw err;
   console.log("Logged added");
@@ -913,7 +921,7 @@ myObject[foundName].id=plat;
   id:plat
 };
 let newData= myObject;
- //saveHistory(newData2);
+ saveHistory(newData2,hist2);
  }
  else{
 // add a new name
@@ -926,7 +934,7 @@ let newData= myObject;
   id:plat
 };
 console.log(newData);
- //saveHistory(newData);
+ saveHistory(newData,hist2);
 if(Array.isArray(myObject)){
 
 		console.log("Is an array"); 
@@ -1073,7 +1081,8 @@ let headers = {
         })
         .catch (e =>
         {
-			console.log(e); 
+			
+			//console.log(e); 
         });
 	
 	
