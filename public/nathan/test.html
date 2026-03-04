@@ -1,10 +1,11 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <title>RoxxieBot – Stars Overlay (Christmas)</title>
-	<link rel="stylesheet" type="text/css" href="obscss.css">
+	
 <style>
 
 </style>
@@ -22,8 +23,8 @@ var fixurl,serverURL;
 	const urlParams = new URLSearchParams(queryString); 
 	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
 	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
-	
-var checkname= months[date.getMonth()]+"_"+tsoh+"_vipboard2.json";
+	var ynid=urlParams.get("YnId")??"51919855";
+	var checkname= months[date.getMonth()]+"_"+tsoh+"_vipboard2.json";
 
 
 console.log(checkname);
@@ -65,14 +66,31 @@ startUp();
 //-->
 </script>
 <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
-<script src="YnChatOnline.js"></script>
-<script src="must.js"></script>
 
+<script src="must.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Bangers&family=Radley:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+
+.bangers-regular {
+  font-family: "Bangers", system-ui;
+  font-weight: 400;
+  font-style: normal;
+  width:400px;
+  height:100px;
+  font-color:black;
+  font-size:50px;
+  position:absolute;
+  
+}
+</style>
 </head>
 <body >
-<div>
-
-</div>
+<span class="banger-regular" >
+YN SUB GOAL -
+</span>
 <div class="snow"></div>
 <div class="overlay-wrapper">
   <div class="board" id="scoreboard" style="display:none">
@@ -248,6 +266,68 @@ function renderLeaderboard() {
 
 // Initial load + polling refresh
 loadJson()
+ynchatStart(ynid);
+
+function ynchatStart(ynid2){
+console.log("YN part");
+
+    const socket = new WebSocket('wss://younow-ws.zerody.one/?channelId='+ynid2);
+
+
+    socket.onopen = (e) => {
+      console.log("[open] Connection established");
+    };
+
+    // 3. Event: Message received from server
+	socket.onmessage = (event) => {
+
+		const userObject = JSON.parse(event.data);
+		const Onstuff = userObject.event;
+
+
+			switch(Onstuff){
+							
+							case "onChat":
+							//	handleChat(userObject)						
+							break;
+							
+							case "onSticker":
+							break;
+							
+							case "onSub":
+							console.log(userObject.data);
+							
+			
+							break;
+							case "onResub":
+							
+							console.log("Resub");
+							console.log(userObject.data); 
+							
+							break;
+							
+							case "onGift":
+							
+							handleGifts(userObject);
+							break;
+							
+							default:
+							
+							if((Onstuff!="onBroadcastPlayData")&&(Onstuff!="onSystemMessage")&&(Onstuff!="onProxyAgoraRoomJoined")&&(Onstuff!="onProxySubscriptonCreated")&&(Onstuff!="onProxyBroadcastInfo")&&(Onstuff!="onTopFanChange")&&(Onstuff!="onPropsChestResult")&&(Onstuff!="onPropsChest"))
+							{
+								console.log(userObject);
+							}
+							else if(Onstuff==="onProxyAgoraRoomLeaved"){
+							
+							console.log("offline");
+							}
+							else{
+							
+							}
+							}
+							
+    };
+}
 
 
 function beginFun(TwitchChannel){
@@ -265,19 +345,30 @@ console.log("Currently working on " + TwitchChannel);
 			
 	
 		}
-		/**/
-		ComfyJS.onSub=( user, message, subTierInfo, extra )=>{
-		console.log("new subs");
-		console.log(extra);
-		const viewer = ensureViewer("Twitch-bot", user);
-		viewer.stars=parseInt(viewer.stars+10);
-			addStars2 (viewer, 10,"twitch-bot",1)
-		console.log(viewer);
+		ComfyJS.onCheer=( user, message, bits, flags, extra )=>{
+		console.log(user + " " + bits); 
 		
+		}
+		/*ComfyJS.onCheer( user, message, bits, flags, extra )=>{}*/
+		ComfyJS.onSub=( user, message, subTierInfo, extra )=>{
+				console.log("new subs");
+				console.log(extra);
+				const viewer = ensureViewer("Twitch-bot", user);
+				viewer.stars=parseInt(viewer.stars+10);
+					addStars2 (viewer, 10,"twitch-bot",1)
+				console.log(viewer);
+				
 		};
 		
 		ComfyJS.onSubGift=( gifterUser, streakMonths, recipientUser, senderCount, subTierInfo, extra ) =>{
+			console.log("Has gifted: " + 1); 
 			
+		
+				//const viewer = ensureViewer("Twitch-bot", gifterUser);
+			
+				//viewer.stars = parseInt(viewer.stars+ (1*10));
+				//console.log(viewer);	
+				// addStars2 (viewer, 1*10,"twitch-bot",1)
 		}
 		
 		ComfyJS.onSubMysteryGift =( gifterUser, numbOfSubs, senderCount, subTierInfo, extra ) =>{
@@ -322,7 +413,69 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
         ComfyJS.Init(TwitchChannel);
   
 }
+
 beginFun(twitchUser)
+
+
+function handleGifts(userObject){
+
+	if(userObject.data.stageGifts[0].SKU==="SUBSCRIPTION_GIFT")
+							{
+							//"JustinRG has gifted PrincessPower_PGPfinah a 1 month subscription!"
+		
+						
+							console.log("Gifted sub + ")
+							var comments=userObject.data.stageGifts[0].comment;
+							var parts =comments.split(" "); 
+							console.log(parts);
+							
+							console.log("Has gifted a sub" + parts[0]);
+		
+							const viewer = ensureViewer("Yn-bot-gifted-sub",parts[0]);
+		
+							viewer.stars=parseInt(viewer.stars+10);
+							addStars2 (viewer, 10,"yn-bot-gifted-sub",1)
+		
+							}
+	else if (userObject.data.stageGifts[0].SKU==="RESUBSCRIBED"){
+							
+						const viewer = ensureViewer("Yn-bot-resub", userObject.data.stageGifts[0].profileUrlString);
+						
+						viewer.stars=parseInt(viewer.stars+10);
+						addStars2 (viewer, 10,"yn-bot-resub",1)
+		//console.log(userObject.data.stageGifts[0].profileUrlString+" has resubscribed")
+							
+							}
+							else{
+								
+								//Handle all other gifts 
+								console.log(userObject.data.stageGifts[0]);
+								//console.log(userObject.data.stageGifts[0].value);
+	
+							}
+}
+function handleChat(userObject){
+
+//	console.log(userObject.data);
+	
+	var isMod=userObject.data.comments[0].broadcasterMod
+	var usrname=userObject.data.comments[0].name;
+	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
+	var message= userObject.data.comments[0].comment;
+	
+	console.log(tmstamp+" "+usrname+":"+userObject.data.comments[0].comment);
+	//console.log(usrname + " " + isMod);
+	if(isMod!=false)
+	{
+	if(message.includes("!vip"))
+	{
+	makeItVisible();
+	}
+	}
+	
+}
+
+
 
 </script>
 
