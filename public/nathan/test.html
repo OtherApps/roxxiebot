@@ -468,21 +468,11 @@ function handleChat(userObject){
 	{
 	makeItVisible();
 	}
-	else if(message.includes("!add")){
-	
-					var temp=message.split("!add");
-					var getstuff=temp[1].split(" ");
-					var usr= getstuff[1]; 
-					var amt=getstuff[2];
-					const viewer = ensureViewer("younow", usr);
-					var ynmod=usrname+"-YouNow";
+		else{
 
-					
-					addStars2 (viewer, amt,ynmod,getstuff[3])
-						outstuff = temp[1];
-					
-	
-	}
+
+			
+		}
 	}
 	
 }
