@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    <style>
+        body { margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: transparent; }
+        #status-indicator {
+            position: absolute; top: 10px; right: 10px; display: flex; align-items: center;
+            background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 20px; color: white; font-size: 12px;
+        }
+        #status-dot { height: 8px; width: 8px; background: #ff4444; border-radius: 50%; margin-right: 8px; }
+        .live { background: #00ff00 !important; box-shadow: 0 0 8px #00ff00; animation: blink 1.5s infinite; }
+        #chat-container { display: flex; flex-direction: column; justify-content: flex-end; height: 90vh; width: 400px; }
+        .chat-line {
+            background: rgba(0,0,0,0.75); color: white; padding: 12px; margin-top: 8px;
+            border-radius: 10px; font-size: 18px; animation: slideIn 0.3s ease-out forwards;
+            border-left: 4px solid #5e81ac; text-shadow: 1px 1px 2px black;
+        }
+        .super-chat {
+            background: linear-gradient(45deg, #ffd700, #ffae00); color: black;
+            border-left: 6px solid white; font-weight: bold; animation: pulse 1.5s infinite;
+        }
+        .emote { height: 1.2em; vertical-align: middle; }
+        .badge { margin-right: 5px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+    <div id="status-indicator">
+        <span id="status-dot"></span> <span id="status-text">OFFLINE</span> <span id="msg-counter" style="margin-left:8px">| 💬 0</span>
+    </div>
+    <div id="chat-container" style="display:none"></div>
+	<div id="info-div">
+	<center><table>
+	<tr><td>Channel Id</td><td><input type="text" value="UCbfZk3w0iboA5moUH3n-yBA" id="chID"/></td>
+	</tr>
+	<tr><td colspan="2"><center><button onclick="start()">Start</button></center></td></tr>
+	
+	
+	</table>
+	</center>
+	
+	</div>
+<script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+<script src="ytchat.js"></script>
+    <script>
+     //  start();
+	  // UCL7bBOIdfxxM9WyxTnTk7Qg
+    </script>
+</body>
+</html>
