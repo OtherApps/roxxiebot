@@ -1,3 +1,7 @@
+
+const fs = require("fs").promises;
+const path = require("path");
+
 const { LiveChat } = require("youtube-chat");
 const io = require("socket.io")(3000, {
   cors: {
@@ -24,6 +28,8 @@ function startChat(channelId) {
 		
         msgCount++;
         io.emit("message", { type: 'chat', data: chatItem, count: msgCount });
+		savemsg(channelId,chatItem);
+		
     });
 
     liveChat.on("superChat", (superChat) => {
@@ -52,6 +58,25 @@ io.on("connection", (socket) => {
 	
 });
 
+async function savemsg(id,data){
+	
+	
+	const content = data.message.map(run => {
+                if (run.text) return `<span>${run.text}</span>`;
+                if (run.emoji) return `<img src="${run.emoji.thumbnails.url}" class="emote">`;
+            }).join("");
+			var output= "<strong>"+data.author.name+"</strong>:"+content+"\r";
+
+fs.appendFile("../projects/logs/yt_"+id+'file.log', output, err => {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log('Content appended to file successfully!');
+  }
+});
+
+
+}
 function StartTwitch(ids){
 	
 	
