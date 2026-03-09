@@ -1,4 +1,4 @@
-
+const date = new Date();
 const fs = require("fs").promises;
 const path = require("path");
 
@@ -13,6 +13,7 @@ const ids="";
 
 let liveChat;
 let msgCount = 0;
+
 
 function startChat(channelId) {
     if (liveChat) {
@@ -60,20 +61,32 @@ io.on("connection", (socket) => {
 
 async function savemsg(id,data){
 	
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+var checkname= months[date.getMonth()]+"_"+date.getDate()+"_"+id+"_YoutubeChat.log";
 	
 	const content = data.message.map(run => {
                 if (run.text) return `<span>${run.text}</span>`;
                 if (run.emoji) return `<img src="${run.emoji.thumbnails.url}" class="emote">`;
             }).join("");
 			var output= "<strong>"+data.author.name+"</strong>:"+content+"\r";
+			
+var filenames=checkname
+console.log(filenames);
 
-fs.appendFile("../projects/logs/yt_"+id+'file.log', output, err => {
+
+
+fs.appendFile(checkname, output, err => {
   if (err) {
     console.error(err);
   } else {
     console.log('Content appended to file successfully!');
   }
 });
+
 
 
 }
