@@ -1,0 +1,69 @@
+
+<html>
+<head><title></title></head>
+
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+<div id="info"></div>
+
+<script>
+//2022-04-02
+var output ="";
+
+
+
+function amountofYears(data){
+var temp= (moment(data, "MMMM-DD-YYYY").fromNow());
+
+return(temp);
+
+}
+
+async function getdata(){
+// url = http://192.168.1.172:8080/subfile
+ try {
+    const response = await fetch('http://192.168.1.172:8080/subfile');
+    if (!response.ok) { // Check for HTTP errors (status codes outside 200-299)
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.text();
+	handleData(data);
+	
+  } catch (error) {
+    console.error('Fetch error:', error); // Handle any errors (network or HTTP)
+  }
+
+}
+
+function handleData(data){
+
+	var temp= data.split("\r"); 
+	
+	for(let x of temp.entries()){
+		
+		var stuff=x[1];
+		var tempdate = stuff.split(",")??",";
+		var finaldate=tempdate[1].split("'")??",";
+		if(finaldate[1].includes("undefined")){
+		
+		}
+		else{
+	 output += "<div>"+tempdate[0]+" "+amountofYears(finaldate[1])+"</div>";
+		}
+		//console.log(finaldate[1]);
+		
+	
+	
+	}
+let element = document.getElementById("info");
+element.innerHTML=output;
+
+
+}
+getdata();
+
+</script>
+
+</body>
+</html>
