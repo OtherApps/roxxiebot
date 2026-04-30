@@ -1,0 +1,198 @@
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+
+<title></title>
+	<script>
+	<!--
+	
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
+	var ynid=urlParams.get("YnId")??"51919855";
+	
+	//-->
+	</script>
+	
+</head>
+
+
+<body>
+<audio id="myAudioElement"></audio>
+
+<script>
+const listoftrigger = ["levelup","hello"];
+const soundslist=["MARIOPOWERUP-SOUNDEFFECT.mp3","3.mp3"]
+const audioElement = document.getElementById("myAudioElement");
+
+const playlist = [];
+let currentIndex = 0;
+const delayTime = 3000; // 3 seconds in milliseconds
+const audioPlayer = new Audio();
+var url = "https://roxxieverse.com/test/sounds/";
+function playNext() {
+
+
+  if (currentIndex < playlist.length) {
+    audioElement.src = url+playlist[currentIndex];
+    audioElement.play().catch(error =>{console.log(error)});
+	
+	console.log("Currently playing " +  playlist[currentIndex]);
+	
+    currentIndex++;
+
+  } else {
+    console.log("Playlist finished");
+  }
+}
+
+// Event listener to trigger delay after each track
+audioElement.addEventListener('ended', () => {
+  console.log(`Track ended. Waiting ${delayTime / 1000} seconds...`);
+  setTimeout(playNext, delayTime);
+});
+
+
+ynchatStart(ynid)
+function ynchatStart(ynid2){
+console.log("YN part");
+
+    const socket = new WebSocket('wss://younow-ws.zerody.one/?channelId='+ynid2);
+
+
+    socket.onopen = (e) => {
+      console.log("[open] Connection established");
+    };
+
+    // 3. Event: Message received from server
+	socket.onmessage = (event) => {
+
+		const userObject = JSON.parse(event.data);
+		const Onstuff = userObject.event;
+
+
+			switch(Onstuff){
+							
+							case "onChat":
+								handleChat(userObject)				
+
+							//	console.log(userObject);
+								
+							break;
+							
+							case "onSticker":
+							break;
+							
+							case "onSub":
+						//	console.log(userObject.data);
+							
+			
+							break;
+							case "onResub":
+							
+							break;
+							
+							case "onGift":
+							
+							//handleGifts(userObject);
+							break;
+							
+							default:
+							
+							}
+							
+    };
+}
+function addtriggertolist(usrname,trigger){
+
+		var temp = trigger;
+		var arrOfTriggers = listoftrigger.indexOf("temp");
+		var arrsounds = soundslist;
+
+		var foundIndex=(listoftrigger.indexOf(temp));
+		console.log(foundIndex);
+
+		if(foundIndex>-1){
+
+		playlist.push(arrsounds[foundIndex]);
+		playNext();
+
+		}
+		else{
+
+		console.log("Not found"); 
+		}
+}
+function handleChat(userObject){
+
+//	console.log(userObject.data);
+	
+	var isMod=userObject.data.comments[0].broadcasterMod
+	var usrname=userObject.data.comments[0].name;
+	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
+	var message2= userObject.data.comments[0].comment;
+	var message= message2.split(" ");;
+	var extra=userObject.data.comments[0].subscriptionData ?? "Empty";
+	
+	if(extra !="Empty"){
+	console.log(extra.badgeAssetSku);
+	addtriggertolist(usrname,message[1]);
+	
+	}
+	
+	
+}
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  if(sec <10 ){
+	sec ="0"+sec
+
+  }
+  if(hour <10) {
+	hour = "0" + hour;
+
+  }
+  if(min <10){
+	min = "0" + min
+
+  }
+  var time =   hour + ':' + min ;
+  return time;
+}
+function beginFun(TwitchChannel){
+console.log("Currently working on " + TwitchChannel);
+
+	ComfyJS.onCommand = (user, command, message, flags, extra) => {
+	
+	
+	
+	if(flags.subscriber){
+	
+		addtriggertolist(user,command);
+		//playNext();
+	
+  } 
+  
+	}
+ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+ //console.log( extra);
+ 
+}
+
+        ComfyJS.Init(TwitchChannel);
+  
+}beginFun(twitchUser)
+
+</script>
+
+</body>
+</html>
