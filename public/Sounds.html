@@ -4,7 +4,7 @@
 
 <title></title>
 	<script>
-	<!--
+<!--
 	
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString); 
@@ -22,17 +22,75 @@
 <audio id="myAudioElement"></audio>
 
 <script>
+let isPlaying = false;
 const listoftrigger = ["levelup","hello"];
 const soundslist=["MARIOPOWERUP-SOUNDEFFECT.mp3","3.mp3"]
 const audioElement = document.getElementById("myAudioElement");
+var trigger_list=[] ;
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function loadtriggers(){
+ try {
+    const response = await fetch('http://192.168.1.172:8080/public/triggers.json');
+    
+    // Check if the request was successful
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    trigger_list = await response.json(); // Parse JSON body
+  //  console.log(trigger_list);
+  } catch (error) {
+    console.error('There was an error:', error);
+  }
+}
+loadtriggers();
+
 
 const playlist = [];
 let currentIndex = 0;
-const delayTime = 3000; // 3 seconds in milliseconds
+const delayTime = 10000; // 3 seconds in milliseconds
+const AUDIO_DELAY = 3000;
 const audioPlayer = new Audio();
-var url = "https://roxxieverse.com/test/sounds/";
-function playNext() {
+//var url = "https://roxxieverse.com/test/sounds2/";
+var url="http://192.168.1.172:8080/public/sounds/"
+async function playNext() {
 
+if(isPlaying)return; 
+isPlaying=true;
+
+
+	while(playlist.length>0){
+	
+	
+	
+	const sound=playlist.shift();
+	//console.log(sound);
+	
+	audioElement.src = url+sound;
+	console.log("Currently playing " + url+sound); 
+	
+		try{
+		
+		await audioElement.play();
+		
+		    await new Promise(resolve => {
+                audioElement.onended = resolve;
+            });
+
+            // Optional delay between sounds
+            await new Promise(resolve =>
+                setTimeout(resolve, delayTime)
+            );
+		
+		 await delay(AUDIO_DELAY);
+		}
+		catch (err) {
+            console.error("Playback error:", err);
+        }
+		
+	}
+/*
 
   if (currentIndex < playlist.length) {
     audioElement.src = url+playlist[currentIndex];
@@ -45,6 +103,10 @@ function playNext() {
   } else {
     console.log("Playlist finished");
   }
+  */
+    isPlaying = false;
+  
+  
 }
 
 // Event listener to trigger delay after each track
@@ -53,6 +115,9 @@ audioElement.addEventListener('ended', () => {
   setTimeout(playNext, delayTime);
 });
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 ynchatStart(ynid)
 function ynchatStart(ynid2){
@@ -106,23 +171,21 @@ console.log("YN part");
 }
 function addtriggertolist(usrname,trigger){
 
-		var temp = trigger;
-		var arrOfTriggers = listoftrigger.indexOf("temp");
-		var arrsounds = soundslist;
 
-		var foundIndex=(listoftrigger.indexOf(temp));
-		console.log(foundIndex);
+		var temp = trigger;
+		var foundIndex=trigger_list.findIndex(trigger_list => trigger_list.trigger === temp);
+		
 
 		if(foundIndex>-1){
 
-		playlist.push(arrsounds[foundIndex]);
-		playNext();
+		playlist.push(trigger_list[foundIndex].sound);
 
 		}
 		else{
 
-		console.log("Not found"); 
+		console.log( temp+"Not found"); 
 		}
+		playNext();
 }
 function handleChat(userObject){
 
@@ -132,12 +195,17 @@ function handleChat(userObject){
 	var usrname=userObject.data.comments[0].name;
 	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
 	var message2= userObject.data.comments[0].comment;
-	var message= message2.split(" ");;
+	var message= message2.split("!");;
 	var extra=userObject.data.comments[0].subscriptionData ?? "Empty";
 	
 	if(extra !="Empty"){
-	console.log(extra.badgeAssetSku);
+	//console.log(extra.badgeAssetSku);
+	if(usrname!="Chat_Bot"){
+	if(message2.indexOf("!")===0){
+	//console.log(message)
 	addtriggertolist(usrname,message[1]);
+	}
+	}
 	
 	}
 	
@@ -190,7 +258,10 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
 
         ComfyJS.Init(TwitchChannel);
   
-}beginFun(twitchUser)
+}
+beginFun(twitchUser)
+wait(8000).then(()=>{addtriggertolist("test","RW");addtriggertolist("test","ILTFY")});
+
 
 </script>
 
