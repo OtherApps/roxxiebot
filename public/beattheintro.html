@@ -1,0 +1,507 @@
+<html>
+<head>
+
+<style>
+	@font-face {
+  font-display: swap;
+  font-family: "handelson-two";
+  font-style: normal;
+  font-weight: 400;
+  src: url("./fonts/handelson-two.otf") format("opentype");
+}
+
+body {
+    margin: 0;
+    background: black;
+    font-family: "handelson-two", sans-serif;
+	color:white;
+#	 background: url("RT_NEW_OVERLAY_IDEAS_32.png") center/cover no-repeat;
+background: url("https://roxxieverse.com/test/RT_NEW_OVERLAY_IDEAS_23.png") center/cover no-repeat;
+}
+
+/* MAIN LAYOUT */
+.overlay {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 500px;
+    padding: 20px;
+    font-family: "handelson-two", sans-serif;
+}
+
+/* TEAM COLUMN */
+.team {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+	    font-family: "handelson-two", sans-serif;
+}
+
+/* TEAM NAME */
+.team-name {
+
+	
+	align-items:center;
+	
+    font-size: 100px;
+
+    text-transform: uppercase;
+    background: black;
+    color: black;
+	
+	
+    text-shadow: 
+        -1px -1px 0 white,  
+         1px -1px 0 white,
+        -1px  1px 0 white,
+         2px  2px 0 white;
+}
+
+/* SCORE CENTER */
+.center {
+    width: 30%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.score-display {
+  height: 100px;
+    font-size: 150px;
+  
+    border-radius: 10px;
+}
+
+/* ROSTER */
+.roster {
+
+    width: 500px;
+
+    
+    list-style: none;
+	 justify-content:center;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* FIXED PLAYER SLOT */
+.roster li {
+
+	width:490px;
+    height:60px; /* 🔥 fixed row height */
+    display: flex;
+    align-items:center;
+    justify-content:center;
+	background-color:transparent;
+	
+    font-size: 90px;
+    color: black; 
+
+    text-transform: uppercase;
+
+    text-shadow: 
+        -1px -1px 0 white,  
+         1px -1px 0 white,
+        -1px  1px 0 white,
+         2px  2px 0 white;
+
+    padding:20px;
+	
+}
+
+/* EMPTY SLOT STYLE */
+.empty {
+    opacity: 0.3;
+}
+
+/* NEON THEMES */
+.green {
+    border: 4px solid #39FF14;
+    box-shadow: 0 0 10px #39FF14, inset 0 0 10px #39FF14;
+}
+
+.purple {
+    border: 4px solid #bc13fe;
+    box-shadow: 0 0 10px #bc13fe, inset 0 0 10px #bc13fe;
+}
+
+</style>
+	<script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+	
+	<script>
+	<!--
+	
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
+	var ynid=urlParams.get("YnId")??"51919855";
+	var points = []; // add score card 
+	
+	ComfyJS.Init(twitchUser);
+
+	//-->
+	</script>
+
+</head>
+<body>
+<div class="overlay">
+
+  <!-- LEFT TEAM -->
+  <div class="team" style="; background-color:transparent">
+
+
+  <div class="team-name" style="left:85px;background-color:transparent;position:absolute;top:90px;">Team Green</div>
+	
+	
+   <ul id="home-roster" class="roster" style="height:660px; background-color:transparent;position:absolute;left:20px;top:340px"></ul>
+  </div>
+
+  <!-- SCORE -->
+  <div class="center">
+    <div class="score-display" style="background-color:transparent; position:absolute;top:70px">
+	
+		
+      <span id="home-score"  style="background-color:transparent;padding:10px;padding-left:1px">000</span>
+   
+      -
+      <span id="guest-score"  style="background-color:transparent;padding:10px;">000</span>
+    </div>
+  </div>
+
+  <!-- RIGHT TEAM -->
+  <div class="team" style="">
+
+
+    <div class="team-name" style="top:90px;background-color:transparent;right:90px;position:absolute">Team Purple</div>
+
+		<div style="height:135px"></div>
+	
+    <ul id="guest-roster" class="roster" style="height:660px; background-color:transparent;top:345px;position:absolute;right:80px;align:center"></ul>
+  </div>
+
+</div>
+<!--
+<table>
+<tr>
+<td ><div class="team-name green-div">Team green</div></td>
+<td>
+<center>
+<div class="score-display team-name" >
+<div style=""id="home-score">000</div>-
+<div id="guest-score">000</div>
+</div>
+
+</center>
+</td>
+
+<td>
+<center>
+<div class="team-name purple-div" >Team purple</div>
+</center>
+
+</td>
+</tr>
+
+<tr>
+<td><ul id="home-roster" class="roster green-div" style="width:70%"></ul>
+</td>
+<td></td>
+<td><ul id="guest-roster" class="roster purple-div" style="width:70%"></ul></td>
+</tr>
+
+</table>
+//-->
+
+<script>
+  const defaultState = {
+            home: {
+                score: 0,
+                members: []
+            },
+            guest: {
+                score: 0,
+                members: []
+            }
+        };
+
+        let gameState = JSON.parse(JSON.stringify(defaultState));
+
+        // Initialize App
+        function init() {
+            const saved = localStorage.getItem('scoreboardData');
+            if (saved) {
+                gameState = JSON.parse(saved);
+            }
+            render();
+        }
+
+        function updateScore(team, points) {
+			console.log(points);
+			
+		
+            gameState[team].score = parseInt(gameState[team].score) +parseInt(points);
+            
+			if (gameState[team].score < 0) gameState[team].score = 000;
+            saveAndRender();
+        }
+
+        function resetGame() {
+            if (confirm("Reset scores to zero?")) {
+                gameState.home.score = 000;
+                gameState.guest.score = 000;
+                saveAndRender();
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('scoreboardData', JSON.stringify(gameState));
+            render();
+        }
+
+        function render() {
+            // Update Scores
+            document.getElementById('home-score').textContent = gameState.home.score;
+            document.getElementById('guest-score').textContent = gameState.guest.score;
+
+            // Update Rosters
+            renderRoster('home-roster', gameState.home.members);
+            renderRoster('guest-roster', gameState.guest.members);
+        }
+
+		function addHome1(addme){
+		//gameState.home.members.push(player);
+		gameState.home.members.push(addme);
+		
+		render();
+	
+		}
+	
+	function addHome2(addme){
+		//gameState.home.members.push(player);
+		gameState.guest.members.push(addme);
+		
+		render();
+		
+		
+		}    
+    function renderRoster(elementId, members) {
+            const list = document.getElementById(elementId);
+            list.innerHTML = members.map(m => `<li>${m}</li>`).join('');
+        }
+
+        init();
+		ynchatStart(ynid)
+function ynchatStart(ynid2){
+console.log("YN part");
+
+    const socket = new WebSocket('wss://younow-ws.zerody.one/?channelId='+ynid2);
+
+
+    socket.onopen = (e) => {
+      console.log("[open] Connection established");
+    };
+
+    // 3. Event: Message received from server
+	socket.onmessage = (event) => {
+
+		const userObject = JSON.parse(event.data);
+		const Onstuff = userObject.event;
+
+
+			switch(Onstuff){
+							
+							case "onChat":
+								handleChat(userObject)						
+							break;
+							
+							case "onSticker":
+							break;
+							
+							case "onSub":
+						//	console.log(userObject.data);
+							
+			
+							break;
+							case "onResub":
+							
+						//	console.log("Resub");
+						//	console.log(userObject.data); 
+							
+							break;
+							
+							case "onGift":
+							
+							//handleGifts(userObject);
+							break;
+							
+							default:
+							
+							if((Onstuff!="onBroadcastPlayData")&&(Onstuff!="onSystemMessage")&&(Onstuff!="onProxyAgoraRoomJoined")&&(Onstuff!="onProxySubscriptonCreated")&&(Onstuff!="onProxyBroadcastInfo")&&(Onstuff!="onTopFanChange")&&(Onstuff!="onPropsChestResult")&&(Onstuff!="onPropsChest"))
+							{
+								console.log(userObject);
+							}
+							else if(Onstuff==="onProxyAgoraRoomLeaved"){
+							
+							console.log("offline");
+							}
+							else{
+							
+							}
+							}
+							
+    };
+}
+function handleChat(userObject){
+
+	var isMod=userObject.data.comments[0].broadcasterMod
+	var usrname=userObject.data.comments[0].name;
+	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
+	var message= userObject.data.comments[0].comment;
+	var extra=userObject.data.comments[0].subscriptionData ?? "Empty";
+	if((userObject.data.comments[0].userId!="2282276")||(isMod!=true)){
+	//console.log("not a mod")
+	}
+	else{
+	console.log("within  mod part");
+	
+	if(message.includes("!team1")!=false)
+{
+var temp = message.split("!team1");
+var scoreboard = temp[1].split(" "); 
+console.log(scoreboard);
+
+updateScore("home",scoreboard[1]);
+
+}
+	else if(message.includes("!team2")!=false) 
+{
+var temp = message.split("!team2");
+console.log("Team two" +temp[1]);
+var scoreboard = temp[1].split(" "); 
+//console.log(scoreboard);
+
+updateScore("guest",scoreboard[1]);
+
+}
+
+if(message.includes("!add1")!=false){
+console.log("within the add part");
+/*
+var temp= message.split("!add1");
+var testva= temp[1].replace(" ","");
+console.log(testva);
+
+example !add1 test 10 
+		message=message.split("!add1");
+		var scoreboard = message[0].split(" "); 
+		var usrname = scoreboard[0];
+		var cleanup= scoreboard[1];
+		var temp = {"Name":usrname,"Points":cleanup}
+		points.push(temp); 
+*/
+
+
+//console.log(testva);
+var temp= message.split("!add1");
+var testva= temp[1].replace(" ","");
+console.log(testva);
+
+addHome1(testva)
+}
+else if (message.includes("!add2")!=false){
+
+		message=message.split("!add2");
+		var testva= temp[1].replace(" ","");
+		console.log(testva);
+		
+		addHome2(cleanup)
+
+}
+else{
+
+}
+}
+}
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  if(sec <10 ){
+	sec ="0"+sec
+
+  }
+  if(hour <10) {
+	hour = "0" + hour;
+
+  }
+  if(min <10){
+	min = "0" + min
+
+  }
+  var time =   hour + ':' + min ;
+  return time;
+}		
+
+
+function startTwitch(){
+console.log("here");
+ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+//console.log(message);
+
+}
+	ComfyJS.onCommand = (user, command, message, flags, extra) => {
+	
+	
+	//console.log(command); 
+	
+	if(flags.mod || flags.broadcaster){
+	if(command==="add1"){
+	
+		var scoreboard = message.split(" "); 
+		var usrname = scoreboard[0];	
+		console.log(message); 
+		addHome1(message)
+	}
+	else if(command==="add2"){
+				
+		var scoreboard = message.split(" "); 
+		var usrname = scoreboard[0];
+		addHome2(usrname);
+		
+	}
+	else if (command==="team1"){
+	
+		var temp = message.split(" ");
+		var cleanup= parseInt(temp[0])
+		console.log(cleanup); 
+		updateScore("home",cleanup);
+	}
+	else if(command==="team2"){
+	
+		var temp = message.split(" ");
+		var cleanup= parseInt(temp[0])
+		console.log(cleanup); 
+		updateScore("guest",cleanup);
+	}
+	else{
+	
+	}
+  } 
+  
+	}
+}
+startTwitch()
+
+</script>
+
+
+</body>
+</html>
