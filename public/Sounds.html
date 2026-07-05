@@ -11,7 +11,8 @@
 	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
 	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
 	var ynid=urlParams.get("YnId")??"51919855";
-	
+
+
 	//-->
 	</script>
 	
@@ -28,6 +29,7 @@ const soundslist=["MARIOPOWERUP-SOUNDEFFECT.mp3","3.mp3"]
 const audioElement = document.getElementById("myAudioElement");
 var trigger_list=[] ;
 var lastplayed; 
+var OnOrOff=false; 
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -55,7 +57,7 @@ const delayTime = 10000; // 3 seconds in milliseconds
 const AUDIO_DELAY = 8000;
 const audioPlayer = new Audio();
 var url = "https://roxxieverse.com/test/sounds2/";
-//var url="http://192.168.1.172:8080/public/sounds/"
+
 async function playNext() {
 
 if(isPlaying)return; 
@@ -92,20 +94,7 @@ isPlaying=true;
         }
 		
 	}
-/*
 
-  if (currentIndex < playlist.length) {
-    audioElement.src = url+playlist[currentIndex];
-    audioElement.play().catch(error =>{console.log(error)});
-	
-	console.log("Currently playing " +  playlist[currentIndex]);
-	
-    currentIndex++;
-
-  } else {
-    console.log("Playlist finished");
-  }
-  */
     isPlaying = false;
   
   
@@ -172,10 +161,18 @@ console.log("YN part");
     };
 }
 function addtriggertolist(usrname,trigger){
+	trigger=trigger.toUpperCase()
+		if(trigger==="ONOROFF"){
+			
+			OnOrOff=true; 
+			console.log(" " + OnOrOff);
 
-
+	}
+	
+	if(OnOrOff!=true){
 		var temp = trigger.toUpperCase();
 		var foundIndex=trigger_list.findIndex(trigger_list => trigger_list.trigger === temp);
+	//	console.log(foundIndex);
 		
 
 		if((foundIndex>-1)&&(lastplayed!=temp)){
@@ -191,7 +188,7 @@ function addtriggertolist(usrname,trigger){
 
 		//console.log( temp+"Not found"); 
 		}
-		
+	}	
 }
 function handleChat(userObject){
 
@@ -217,6 +214,134 @@ function handleChat(userObject){
 	
 	
 }
+
+function main(chatroomID) {
+console.log("With in main Kick");
+
+//badgesOption();
+//getBadges(getUserName());
+//wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false
+// old ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.4.0&flash=false'
+    const chat = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false');
+	
+//getBadges();
+	
+    chat.onerror = (error) => {
+        console.log("Error: " + error);
+    };
+
+    chat.onopen = () => {
+        console.log("Connected to Pusher");
+   
+        setTimeout(() => {
+           // document.getElementById("loading").style.display = "none";
+        }, 1000);
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `chatrooms.${chatroomID}.v2`
+                },
+            })
+        );
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `channel.${chatroomID + 2}`
+                },
+            })
+        )
+    };
+	
+    chat.onmessage = (event) => {
+		//console.log(event);
+		//console.log(event.data);
+dealwithmsg(event.data);		
+// parseMessage(event.data);
+ 
+    };
+
+    // Ping every 1 minute to keep the connection alive
+    setInterval(() => {
+        chat.send(JSON.stringify({
+            event: 'pusher:ping',
+            data: {}
+        }));
+    }, 60000);
+}
+
+//userData.subscriber_badges
+function dealwithmsg(rawdata){
+	msg=JSON.parse(rawdata);
+	
+	const data = JSON.parse(
+        msg.data.replace(/\\u00a0/g, " ")
+            .replace(/\\n/g, " ")
+            .replace(/\\t/g, " ")
+            .replace(/\\r/g, " ")
+            .replace(/\\f/g, " ")
+            .replace(/\\b/g, " ")
+            .replace(/\\v/g, " ")
+            .replace(/\\\\/g, "\\")
+    );
+	//console.log(data.sender);
+	
+
+	if (msg.event == "App\\Events\\ChatMessageEvent") {
+      //  handleMessage(data);
+	  
+	 	let msgID = data.id;
+    let msgContent = data.content;
+    let msgSender = data.sender.username;
+    let msgTimestamp = data.created_at;
+		
+		
+var len =data.sender.identity.badges.length;
+	  if(len>-1){
+			var sub= checksubs(data.sender.identity.badges);
+		  if(sub !=false)
+		  {
+			  //add sounds 
+			  //console.log("Is a subscriber");
+			 if(msgContent.indexOf("!")===0);
+			 {
+			//console.log(msgContent);
+			var temp=msgContent.split("!");
+			//console.log(temp);
+			
+			addtriggertolist(msgSender,temp[1])	 
+				 
+			 }
+			  //indexOf("!")===0
+			  
+		  }
+	  }
+    }
+	
+}
+
+function checksubs(data){
+	var x=0;
+	   var isSub=false;
+	while(x !=data.length){
+		//console.log(data[x].type);
+		if(data[x].type !="subscriber"){}
+		else{
+			
+		isSub=true;
+			break;
+			
+		}
+		x++;
+		
+	}
+	return isSub;
+	
+}
+
 
 function timeConverter(UNIX_timestamp){
   var a = new Date(UNIX_timestamp * 1000);
@@ -265,6 +390,7 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
         ComfyJS.Init(TwitchChannel);
   
 }
+	main(460187);
 beginFun(twitchUser)
 wait(8000).then(()=>{});
 
