@@ -1,0 +1,777 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Toast</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script>
+<!--
+const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
+	var ynid=urlParams.get("YnId")??"51919855";
+	var alreadyShown ="";
+	var onlyonce ="";
+	
+	const toastQueue = [];
+	let toastShowing = false;
+//-->
+</script>
+
+<style>
+@font-face {
+  font-family: 'garet';
+  src: url('https://roxxieverse.com/test/fonts/garet.book2.otf') format('opentype');
+
+}
+
+
+body {
+  background: #000;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* TOAST */
+.toast {
+  width: 300px;
+  
+  padding: 30px;
+  bottom:30px;
+  background-image:url("./toasttemp2.png");
+  border-radius: 25px;
+  #background: linear-gradient(180deg, #3a0066 0%, #2a0050 40%, #0f3d2e 100%);
+  border: 4px solid #39ff14;
+  box-shadow: 0 0 20px #39ff14, inset 0 0 15px rgba(57,255,20,0.4);
+  color: #39ff14;
+ margin-left: -125px; 
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%); /* Hidden state */
+  transition: transform 0.5s ease-in-out; /* Animation speed */
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+  position:fixed;
+ background-repeat: no-repeat; 
+
+  
+}
+
+/* SHOW */
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  pointer-events: auto;
+  bottom:30px;
+  
+}
+
+/* HEADER */
+.toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.toast-title {
+  font-size: 40px;
+  text-shadow: 0 0 10px #39ff14;
+    font-family: 'garet';
+text-shadow: 2px 2px 2px black;
+}
+
+/* CLOSE */
+.toast-close {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #39ff14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 0 12px #39ff14;
+}
+
+/* BODY */
+.toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* IMAGE BOX */
+image .toast-avatar {
+  width: 180px;
+  height: 180px;
+  border-radius: 20px;
+  border: 4px solid #39ff14;
+  box-shadow: 0 0 15px #39ff14, inset 0 0 10px rgba(57,255,20,0.3);
+
+  
+}
+image{
+border-radius:50px;
+
+}
+/* TEXT */
+.toast-text {
+  font-size: 25px;
+   font-family: 'garet';
+}
+
+.toast-text span {
+  display: block;
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.notification {
+background-image:url("./toasttemp2.png");
+
+width:400px;
+height:200px;
+ 
+    border: 4px solid #39ff14;
+    border-radius: 22px;
+
+  background-color:transparent;
+      background-repeat: no-repeat; 
+
+    box-shadow:
+        0 0 4px #39ff14,
+        0 0 12px rgba(57,255,20,.5),
+        inset 0 0 45px rgba(255,255,255,.06),
+        inset 0 -25px 40px rgba(0,0,0,.25);
+
+    overflow: hidden;
+}
+.title2{
+    color:#39ff14;
+	text-align:center;
+	
+    font-size:50px;
+    font-weight:300;
+
+    text-shadow:
+        0 0 4px #000,
+        0 3px 5px rgba(0,0,0,.6),
+        0 0 12px rgba(57,255,20,.35);
+}
+
+.centerText{
+ 
+    font-family:Arial, Helvetica, sans-serif;
+    font-size:24px;
+    font-weight:300;
+    line-height:1.35;
+
+    color:#39ff14;
+
+    text-shadow:
+        0 2px 0 rgba(0,0,0,.45),
+        0 4px 8px rgba(0,0,0,.6),
+        0 0 8px rgba(57,255,20,.25);
+
+    letter-spacing:-1px;
+}
+</style>
+<script>
+var listofuser =[];
+const kickid = urlParams.get('kickid')??460187;
+
+
+function amountofYears(data){
+var temp= (moment(data, "MMMM-DD-YYYY").fromNow(true));
+//console.log(temp);
+
+
+return(temp);
+
+}
+
+
+async function getusername(ids){
+var temp= (ids||"").replace("'",""); 
+console.log(temp);
+var urls="https://swan-tight-porpoise.ngrok-free.app/raw?url=" + "https://cdn.younow.com/php/api/channel/getInfo/channelId="+temp
+//var urls= "https://cors-proxy.htmldriven.com/?url="+"https://cdn.younow.com/php/api/channel/getInfo/channelId="+temp
+console.log(urls);
+
+try {
+    const response = await fetch(urls);
+    if (!response.ok) { // Check for HTTP errors (status codes outside 200-299)
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+	//handleData(data);
+	console.log(data);
+
+	
+  } catch (error) {
+    console.log(error.message); // Handle any errors (network or HTTP)
+  }
+}
+async function getdata(){
+ try {
+    const response = await fetch('https://roxxieverse.com/test/sub.txt');
+    if (!response.ok) { // Check for HTTP errors (status codes outside 200-299)
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.text();
+	handleData(data);
+//console.log(data);
+
+	
+  } catch (error) {
+    console.error('Fetch error:', error); // Handle any errors (network or HTTP)
+  }
+
+}
+
+function handleData(data){
+
+	var temp= data.split("\r"); 
+	//console.log(data);
+	
+	for(let x of temp.entries()){
+		
+		var stuff=x[1];
+		var tempdate = (stuff||"").split(",");
+		var finaldate=(tempdate[1]||"").split("'");
+		
+	if((finaldate[1]||"").includes("undefined")){
+		
+		}
+	else{
+	 
+	//	console.log(tempdate);
+		
+		var usrname = tempdate[0].split("-"); 
+		var cleanuser=usrname[0].replace("'",""); 
+		var cleanup2= cleanuser.replace("\n","");
+		//console.log(cleanup2);
+		
+		listofuser.push(cleanup2+","+usrname[1] +"," + amountofYears(finaldate[1]));
+		
+		}
+	
+	
+	}
+	//console.log(listofuser);
+	
+
+
+
+}
+getdata();
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+ynchatStart(ynid)
+function ynchatStart(ynid2){
+console.log("YN part");
+
+    const socket = new WebSocket('wss://younow-ws.zerody.one/?channelId='+ynid2);
+
+
+    socket.onopen = (e) => {
+      console.log("[open] Connection established");
+    };
+
+    // 3. Event: Message received from server
+	socket.onmessage = (event) => {
+
+		const userObject = JSON.parse(event.data);
+		const Onstuff = userObject.event;
+
+
+			switch(Onstuff){
+							
+							case "onChat":
+								//console.log(userObject);
+								
+								handleChat(userObject)						
+							break;
+							
+							case "onSticker":
+							break;
+							
+							case "onSub":
+						//	console.log(userObject.data);
+							
+			
+							break;
+							case "onResub":
+							
+							//	console.log("Resub");
+							// console.log(userObject.data); 
+							
+							break;
+							
+							case "onGift":
+							
+							//handleGifts(userObject);
+							break;
+							
+							default:
+							
+							if((Onstuff!="onBroadcastPlayData")&&(Onstuff!="onSystemMessage")&&(Onstuff!="onProxyAgoraRoomJoined")&&(Onstuff!="onProxySubscriptonCreated")&&(Onstuff!="onProxyBroadcastInfo")&&(Onstuff!="onTopFanChange")&&(Onstuff!="onPropsChestResult")&&(Onstuff!="onPropsChest"))
+							{
+							//	console.log(userObject);
+							}
+							else if(Onstuff==="onProxyAgoraRoomLeaved"){
+							
+							// console.log("offline");
+							}
+							else{
+							
+							}
+							}
+							
+    };
+}
+
+function handleGifts(userObject){
+
+	if(userObject.data.stageGifts[0].SKU==="SUBSCRIPTION_GIFT")
+							{
+							//"JustinRG has gifted PrincessPower_PGPfinah a 1 month subscription!"
+		
+						
+							console.log("Gifted sub + ")
+							var comments=userObject.data.stageGifts[0].comment;
+							var parts =comments.split(" "); 
+							console.log(parts);
+							
+							console.log("Has gifted a sub" + parts[0]);
+		
+							const viewer = ensureViewer("Yn-bot-gifted-sub",parts[0]);
+		
+							viewer.stars=parseInt(viewer.stars+10);
+							addStars2 (viewer, 10,"yn-bot-gifted-sub",1)
+		
+							}
+	else if (userObject.data.stageGifts[0].SKU==="RESUBSCRIBED"){
+							
+						const viewer = ensureViewer("Yn-bot-resub", userObject.data.stageGifts[0].profileUrlString);
+						
+						viewer.stars=parseInt(viewer.stars+10);
+						addStars2 (viewer, 10,"yn-bot-resub",1)
+		//console.log(userObject.data.stageGifts[0].profileUrlString+" has resubscribed")
+							
+							}
+							else{
+								
+								//Handle all other gifts 
+								//console.log(userObject.data.stageGifts[0]);
+								//console.log(userObject.data.stageGifts[0].value);
+	
+							}
+}
+
+function handleChat(userObject){
+
+	
+	
+	var isMod=userObject.data.comments[0].broadcasterMod 
+	var usrname=userObject.data.comments[0].name;
+	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
+	var message= userObject.data.comments[0].comment;
+	var usrId=userObject.data.comments[0].userId;
+	var subData=userObject.data.comments[0].subscriptionData ??null; 
+	
+	if(userObject.data.comments[0].subscriptionData ){
+	//console.log(userObject.data.comments[0].subscriptionData );
+	console.log(onlyonce);
+	if(onlyonce.includes(usrId)){}else{
+	
+	onlyonce +=usrId +",";
+	findme(usrId,usrname);
+	}
+	
+	
+	
+	
+	}
+	
+	
+	
+}
+
+function findme(id,username){
+//console.log(listofuser.findIndex(id));
+//console.log(listofuser[0]);
+//var listofuser = listofuser.split("'"); 
+//console.log(id);
+
+listofuser.forEach(function(element, index, array) {
+    var temp = element.split(",");
+	var cleanup = temp[0].replace("'","");
+	//console.log(temp[1]);
+	
+	if(cleanup.includes(username)||(temp[1].includes(id))){
+	
+	var msg="subscriber for: " + temp[2];
+	var pfp="https://ynassets.younow.com/user/live/"+id+"/"+id+".jpg";
+	//console.log(pfp);
+	
+	showToast(username,pfp,msg)
+	}
+	else{
+//	console.log(id +" is not " +cleanup )
+	}
+	
+	
+});
+}
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  if(sec <10 ){
+	sec ="0"+sec
+
+  }
+  if(hour <10) {
+	hour = "0" + hour;
+
+  }
+  if(min <10){
+	min = "0" + min
+
+  }
+  var time =   hour + ':' + min ;
+  return time;
+}
+
+
+
+</script>
+
+</head>
+
+<body>
+
+<button onclick="randomUser()">Show Toast</button>
+<div class="notification">
+
+
+
+</div>
+<div class="toast" id="toast">
+  <div class="toast-header">
+    <div class="toast-title"></div>
+    
+  </div>
+
+  <div class="toast-body">
+    <div class="toast-avatar"><img src="" id="pfp" style="border-radius:50px;"></image></div>
+
+    <div class="toast-text">
+      <span id="username"></span>
+      <span id="msg"></span>
+	  
+    </div>
+  </div>
+</div>
+
+<script>
+let toastTimer;
+function randomUser(){
+//showToast('ToxxicUser','https://ynassets.younow.com/user/live/51919855/51919855.jpg')
+var rmdNumb= getRandomInt(0,listofuser.length-1);
+//console.log(rmdNumb);
+
+var data = (listofuser[rmdNumb]||"").split(",");
+var tempdata= (data[0]||"").split("'");
+var pfp="https://ynassets.younow.com/user/live/"+data[1]+"/"+data[1]+".jpg";
+//console.log(tempdata);
+
+//console.log(data)
+showToast(data[0],pfp,data[2]);
+
+//getusername(data[0])
+}
+function showToast2(strName,pfp,msg) {
+  const toast = document.getElementById("toast");
+  const username = document.getElementById("username");
+  const pic = document.getElementById("pfp");
+  const messagebox=document.getElementById("msg");
+  
+	username.textContent = strName;
+	messagebox.textContent= msg;
+	
+	toast.classList.add("show");
+	pic.src=pfp
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    hideToast();
+  }, 10000);
+}
+
+function hideToast2() {
+  const toast = document.getElementById("toast");
+  toast.classList.remove("show");
+}
+//New Function below. 
+
+function showToast(strName, pfp, msg) {
+    toastQueue.push({
+        name: strName,
+        pfp: pfp,
+        msg: msg
+    });
+
+    processToastQueue();
+}
+
+function processToastQueue() {
+    if (toastShowing) return;
+    if (toastQueue.length === 0) return;
+
+    toastShowing = true;
+
+    const data = toastQueue.shift();
+
+    const toast = document.getElementById("toast");
+    const username = document.getElementById("username");
+    const pic = document.getElementById("pfp");
+    const messagebox = document.getElementById("msg");
+
+    username.textContent = data.name;
+    messagebox.textContent = data.msg;
+    pic.src = data.pfp;
+
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        hideToast();
+    }, 8000);
+}
+
+function hideToast() {
+    const toast = document.getElementById("toast");
+
+    toast.classList.remove("show");
+
+    // Wait for CSS animation to finish
+    setTimeout(() => {
+        toastShowing = false;
+        processToastQueue();
+    }, 500); // matches your CSS transition
+}
+
+
+
+
+
+function main(chatroomID) {
+console.log("With in main Kick");
+
+const chat = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false');
+	
+	
+    chat.onerror = (error) => {
+        console.log("Error: " + error);
+    };
+
+    chat.onopen = () => {
+        console.log("Connected to Pusher");
+   
+        setTimeout(() => {
+           // document.getElementById("loading").style.display = "none";
+        }, 1000);
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `chatrooms.${chatroomID}.v2`
+                },
+            })
+        );
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `channel.${chatroomID + 2}`
+                },
+            })
+        )
+    };
+	
+    chat.onmessage = (event) => {
+	
+	
+dealwithmsg(event.data);		
+    };
+
+    // Ping every 1 minute to keep the connection alive
+    setInterval(() => {
+        chat.send(JSON.stringify({
+            event: 'pusher:ping',
+            data: {}
+        }));
+    }, 60000);
+}
+
+//userData.subscriber_badges
+function dealwithmsg(rawdata){
+	msg=JSON.parse(rawdata);
+	
+	const data = JSON.parse(
+        msg.data.replace(/\\u00a0/g, " ")
+            .replace(/\\n/g, " ")
+            .replace(/\\t/g, " ")
+            .replace(/\\r/g, " ")
+            .replace(/\\f/g, " ")
+            .replace(/\\b/g, " ")
+            .replace(/\\v/g, " ")
+            .replace(/\\\\/g, "\\")
+    );
+	//console.log(data.sender);
+	
+
+	if (msg.event == "App\\Events\\ChatMessageEvent") {
+      //  handleMessage(data);
+	  
+	 	let msgID = data.id;
+    let msgContent = data.content;
+    let msgSender = data.sender.username;
+    let msgTimestamp = data.created_at;
+		
+		//console.log(data);
+		
+var len =data.sender.identity.badges.length;
+	  if(len>-1){
+			var sub= checksubs(data.sender.identity.badges);
+		  if(sub !=false)
+		  {
+			  //add sounds 
+			  //console.log("Is a subscriber");
+			 if(msgContent.indexOf("!")===0);
+			 {
+	
+				 
+
+for (const item of data.sender.identity.badges) {
+	
+    if (item.type === "subscriber") {
+		
+        var popmessage = "Has been a Subscriber for "+ item.count + " months" ;
+		
+		var pfp =getUserInformationsKick(msgSender)??"https://www.pngall.com/wp-content/uploads/5/User-Profile-PNG-Image.png"
+		//showToast(username,pfp,msg)
+		showToast(msgSender,pfp,popmessage);
+		
+    }
+}	 
+				 
+			
+			 }
+			  //indexOf("!")===0
+			  
+		  }
+		  else{
+			  
+			  console.log(msgSender+":"+msgContent);
+			  
+			  
+		  }
+	  }
+
+	  
+    }
+	else if(msg.event =="App\\Events\\GiftedSubscriptionsEvent"){
+
+	console.log(msg);
+	//	ShowMsg(data);
+		
+		
+	}
+	else if(msg.event=="App\\Events\\SubscriptionEvent"){
+		/*{"chatroom_id": 2575726,"username": "jennarous","months": 15}*/	
+var usrname=data.username; 
+var submonths = data.months; 
+
+	
+	
+	console.log(data);
+	//	ShowMsg(data);
+	}	
+else{
+	/* 
+	subscription_succeeded
+	*/
+	
+	console.log(msg.event);
+	
+	
+}
+}
+
+async function getUserInformationsKick(usrName){
+	var fullurl = "https://kick.com/api/v2/channels/"+usrName+"/users/"+usrName; 
+//console.log(fullurl);
+fetch(fullurl)
+    .then((response) => {
+      return response.json();
+    })
+	.then((data)=>{
+		if(data.profile_pic!=null){
+			console.log(data.profile_pic);
+			
+			//preLoad(usrName,data.profile_pic)
+		}
+		else{
+			//preLoad(usrName,"https://www.pngall.com/wp-content/uploads/5/User-Profile-PNG-Image.png");
+			
+		}
+	}
+	
+	
+	)
+}
+
+
+
+function checksubs(data){
+	var x=0;
+	   var isSub=false;
+	while(x !=data.length){
+		//console.log(data[x].type);
+		if(data[x].type !="subscriber"){}
+		else{
+			
+		isSub=true;
+			break;
+			
+		}
+		x++;
+		
+	}
+	return isSub;
+	
+}
+
+main(kickid);
+</script>
+
+</body>
+</html>
+
