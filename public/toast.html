@@ -10,7 +10,7 @@
 
 <script>
 <!--
-var listofnames  =""; 
+var listofnames  =[]; 
 
 const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString); 
@@ -485,7 +485,7 @@ function timeConverter(UNIX_timestamp){
   </div>
 
   <div class="toast-body">
-    <div class="toast-avatar"><img src="" id="pfp" style="border-radius:50px;"></image></div>
+    <div class="toast-avatar"><img src="" id="pfp" style="border-radius:50px;max-width:100px;max-height:100px;"></image></div>
 
     <div class="toast-text">
       <span id="username"></span>
@@ -496,6 +496,8 @@ function timeConverter(UNIX_timestamp){
 </div>
 
 <script>
+<!--
+
 let toastTimer;
 function randomUser(){
 //showToast('ToxxicUser','https://ynassets.younow.com/user/live/51919855/51919855.jpg')
@@ -537,8 +539,14 @@ function hideToast2() {
 //New Function below. 
 
 function showToast(strName, pfp, msg) {
-    
-if(listofnames.includes(strName)!=true){
+
+const name = strName.toLowerCase();
+
+
+if(listofnames.some(n => n.toLowerCase() === name)){
+return;
+}
+
 toastQueue.push({
         name: strName,
         pfp: pfp,
@@ -548,7 +556,7 @@ toastQueue.push({
 	
 	processToastQueue();
 	
-}
+
     
 }
 
@@ -806,6 +814,8 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
         ComfyJS.Init(TwitchChannel);
 }
 beginFun(twitchUser)
+
+//-->
 </script>
 
 </body>
