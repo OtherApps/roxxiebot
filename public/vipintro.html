@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vip</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+
+
+<script>
+<!--
+var listofnames  =[]; 
+
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
+	var ynid=urlParams.get("YnId")??"51919855";
+	var vip=urlParams.get("vip")??"hamezontoast";
+	var vipTwitch =urlParams.get("vipTw")??"hamezontoast";
+	var alreadyShown ="";
+	var onlyonce =false;
+	const kickid = urlParams.get('kickid')??460187;
+	const toastQueue = [];
+	let toastShowing = false;
+//-->
+</script>
+
+<style>
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+
+        background: black;
+
+        overflow: hidden;
+
+        font-family: Arial, sans-serif;
+    }
+
+    /* Video */
+
+    #videoContainer {
+
+        position: fixed;
+
+        top: 50%;
+        left: 50%;
+
+        transform: translate(-50%, -50%);
+
+        width: 100%;
+        height: 100%;
+
+        display: none;
+
+        z-index: 10;
+    }
+
+    #myVideo {
+
+        width: 100%;
+        height: 100%;
+
+        object-fit: contain;
+
+    }
+
+
+    /* Button */
+
+    #playButton {
+
+        position: fixed;
+
+        top: 20px;
+        left: 20px;
+
+        padding: 15px 30px;
+
+        font-size: 20px;
+
+        font-weight: bold;
+
+        border: none;
+
+        border-radius: 8px;
+
+        background: #00ff41;
+
+        color: #000;
+
+        cursor: pointer;
+
+        z-index: 100;
+
+    }
+
+    #playButton:hover {
+
+        background: #00cc34;
+
+    }
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- BUTTON -->
+
+<button id="playButton" style="display:none">
+    PLAY VIDEO
+</button>
+
+
+<!-- VIDEO -->
+
+<div id="videoContainer">
+
+    <video
+        id="myVideo"
+        playsinline
+        preload="auto">
+
+        <source
+            src="video.mp4"
+            type="video/mp4">
+
+        Your browser does not support video.
+
+    </video>
+
+</div>
+
+
+<script>
+
+const button =
+    document.getElementById("playButton");
+
+const video =
+    document.getElementById("myVideo");
+
+const container =
+    document.getElementById("videoContainer");
+
+
+
+/*
+    BUTTON CLICK
+*/
+
+button.addEventListener("click", function () {
+
+    console.log("Playing video");
+
+    /*
+        Show video
+    */
+
+ 
+    /*
+        Start from beginning
+    */
+
+ 
+	playvid();
+
+
+    /*
+        Play
+    */
+
+    
+
+});
+
+function playvid(){
+console.log("Video is play");
+
+	container.style.display = "block";
+	video.currentTime = 0;
+video.play()
+
+        .catch(function (error) {
+
+            console.error(
+                "Video could not play:",
+                error
+            );
+
+        });}
+
+/*
+    VIDEO FINISHED
+*/
+
+video.addEventListener("ended", function () {
+
+    console.log("Video finished");
+
+    container.style.display = "none";
+
+});
+
+
+
+/*
+    OPTIONAL:
+    Hide video if it is manually stopped
+*/
+
+video.addEventListener("error", function () {
+
+    console.error(
+        "Error loading video"
+    );
+
+});
+
+
+function main(chatroomID){
+
+    const chat = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false');
+	
+//getBadges();
+	
+    chat.onerror = (error) => {
+        console.log("Error: " + error);
+    };
+
+    chat.onopen = () => {
+        console.log("Connected to Pusher");
+   
+        setTimeout(() => {
+           // document.getElementById("loading").style.display = "none";
+        }, 1000);
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `chatrooms.${chatroomID}.v2`
+                },
+            })
+        );
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `channel.${chatroomID + 2}`
+                },
+            })
+        )
+    };
+	
+    chat.onmessage = (event) => {
+
+dealwithmsg(event.data);		
+ 
+    };
+
+    // Ping every 1 minute to keep the connection alive
+    setInterval(() => {
+        chat.send(JSON.stringify({
+            event: 'pusher:ping',
+            data: {}
+        }));
+    }, 6000);
+
+	
+}
+
+function dealwithmsg(rawdata){
+	msg=JSON.parse(rawdata);
+	//console.log(vip);
+	
+	const data = JSON.parse(
+        msg.data.replace(/\\u00a0/g, " ")
+            .replace(/\\n/g, " ")
+            .replace(/\\t/g, " ")
+            .replace(/\\r/g, " ")
+            .replace(/\\f/g, " ")
+            .replace(/\\b/g, " ")
+            .replace(/\\v/g, " ")
+            .replace(/\\\\/g, "\\")
+    );
+	//console.log(data.sender);
+	
+
+	if (msg.event === "App\\Events\\ChatMessageEvent") {
+      //  handleMessage(data);
+	
+	 	let msgID = data.id;
+    let msgContent = data.content;
+    let msgSender = data.sender.username;
+    let msgTimestamp = data.created_at;
+		if(msgSender!='BotRix'){
+
+			if(msgSender!=vip){
+			}else{
+			if(onlyonce!=true){
+			onlyonce=true; 
+			
+				playvid();}
+				}
+		}
+
+    }
+	else {
+	
+
+	
+	}
+}
+
+main(kickid);
+
+function beginFun(TwitchChannel){
+
+ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+	var username = user;
+	if(username!=vipTwitch){}else{
+	
+	if(onlyonce!=true){
+	onlyone=true;
+	
+	playvid();
+	}
+	}
+	
+		
+		//strName, pfp, msg
+ 
+}
+        ComfyJS.Init(TwitchChannel);
+}
+
+
+beginFun(twitchUser)
+
+
+
+</script>
+
+</body>
+</html>
