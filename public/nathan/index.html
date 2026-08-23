@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,21 +7,22 @@
 <!-- 
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString); 
-	var offline=urlParams.get("offline") ?? true; 
+	var offline=urlParams.get("offline") ??false; 
 	var fixurl,serverURL
 	var tsoh =  urlParams.get("streamer") ?? "RoxxieToxxic";
 	
 if(offline!=false){
 console.log("offline");
 
-fixurl = "http://192.168.1.172:8080/raw?url=";
-serverURL= "http://192.168.1.172:8080/"; 
 
+
+fixurl = "https://swan-tight-porpoise.ngrok-free.app/raw?url=";
+serverURL= "https://swan-tight-porpoise.ngrok-free.app/"; 
 }
 else{
 console.log("online");
-serverURL= "https://roxxiebot.ngrok.app/"; 
-fixurl ="https://roxxiebot.ngrok.app/raw?url="
+serverURL= "https://swan-tight-porpoise.ngrok-free.app/"; 
+fixurl =serverURL+"/raw?url="
 
 }
 
@@ -30,33 +30,52 @@ fixurl ="https://roxxiebot.ngrok.app/raw?url="
 </script>
 <script src="functions.js"></script>
 
-    <link rel="stylesheet" href="main.css">
+    <link id="theme-stylesheet" rel="stylesheet" href="main.css">
 <style>
 
 </style>
+<script>
+<!--
+function changeTheme(cssFile) {
+  document.getElementById('theme-stylesheet').href = cssFile;
+}
+
+//-->
+</script>
+
+
 </head>
 <body>
+<div style="width:200px;height:20px;">
+  <select id="menu-select" onchange="changeTheme(this.value)">
+    <option value="Fall_main.css">Fall Theme</option>
+	    <option value="Halloween_main.css">Halloween Theme</option>
+    <option value="Christmas_main.css">Christmas Theme</option>
+
+    
+  </select>
+  </div>
 <center>
 <div class="snow">
 </div>
 <div>
 <h1 style="display:inline;">
 
-  <span class="emoji">🎄</span>
+  <span class="emoji"></span>
   RoxxieBot – Stars System
   <span class="emoji">⭐</span>
-  <span class="emoji">🎁</span>
+  <span class="emoji"></span>
 
 </h1>
 <div>
 
 <p class="small-note">
-  <strong>Christmas Edition:</strong> same Stars logic, cozy festive skin. Works for Twitch / TikTok / YouNow, leaderboard shows combined Stars.
+  <strong></strong>
 </p>
 
 <div class="card" style="max-width:1040px;">
   <div class="card-header-row' style='display:inline'">
-  <center>  <h2 style="margin:0;">Leaderboard (Top 10 – Combined Stars)</h2></center>
+  <center>  <h2 style="margin:0;">Leaderboard </h2></center>
   
   
   </div>
@@ -167,6 +186,7 @@ let viewers = [];
 let doubleStars = false;
 let currentViewer = null;
 window.setInterval(function() {
+			console.log("reading");
 			
 			loadJson();
 			
