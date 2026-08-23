@@ -1,0 +1,232 @@
+/* --- HALLOWEEN VARIATIONS --- */
+:root {
+  --hw-orange: #ff7a00;  /* Pumpkin Orange */
+  --hw-purple: #9d4edd;  /* Ghostly Purple */
+  --hw-green: #39ff14;   /* Toxic Slime Green */
+  --hw-bg: #0b0510;      /* Eerie Deep Abyss */
+}
+
+* { 
+  box-sizing: border-box; 
+}
+
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
+  /* Halloween dark gradient theme */
+  background: radial-gradient(circle at top, #241435 0%, var(--hw-bg) 60%, #000000 100%); 
+  color: #f7f7f7; 
+  padding: 24px; 
+  overflow-x: hidden; 
+  position: relative; 
+  min-height: 100vh; 
+  text-align: center; 
+}
+
+body::before { 
+  content: ""; 
+  pointer-events: none; 
+  position: fixed; 
+  inset: 0; 
+  box-shadow: inset 0 0 200px rgba(0,0,0,0.95); /* Deeper shadows on edges */
+  z-index: -1; 
+}
+
+/* Transformed snow to float upwards like embers/dust motes */
+.snow { 
+  pointer-events: none; 
+  position: fixed; 
+  top: -10%; 
+  left: 0; 
+  width: 100%; 
+  height: 120%; 
+  /* Halloween orange and purple glowing ember particles */
+  background-image: 
+    radial-gradient(3px 3px at 20% 80%, rgba(255,122,0,0.5) 50%, transparent 60%), 
+    radial-gradient(2px 2px at 80% 20%, rgba(157,78,221,0.6) 50%, transparent 60%), 
+    radial-gradient(3px 3px at 40% 40%, rgba(255,122,0,0.4) 50%, transparent 60%), 
+    radial-gradient(2px 2px at 90% 70%, rgba(57,255,20,0.4) 50%, transparent 60%), 
+    radial-gradient(4px 4px at 50% 10%, rgba(157,78,221,0.3) 50%, transparent 60%); 
+  background-size: 240px 300px; 
+  animation: ash-rise 14s linear infinite; /* Rises rather than falls */
+  opacity: 0.6; 
+  z-index: -1; 
+}
+
+@keyframes ash-rise { 
+  0% { transform: translateY(80px); } 
+  100% { transform: translateY(-80px); } 
+}
+
+h1 { 
+  color: var(--hw-orange); 
+  text-shadow: 0 0 12px rgba(255,122,0,0.65); 
+  margin-bottom: 4px; 
+  display: flex; 
+  gap: 8px; 
+}
+
+h1 span.emoji { 
+  font-size: 1.6rem; 
+}
+
+h2 { 
+  margin-top: 16px; 
+  color: var(--hw-purple); 
+  text-shadow: 0 0 10px rgba(157,78,221,0.7); 
+}
+
+.small-note { 
+  font-size: 12px; 
+  color: #f0f0f0; 
+  opacity: 0.85; 
+}
+
+.row { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 16px; 
+  margin-bottom: 16px; 
+}
+
+.card { 
+  border-radius: 14px; 
+  padding: 12px; 
+  background: linear-gradient(145deg, rgba(20,13,30,0.98), rgba(9,5,16,0.98)); 
+  border: 1px solid rgba(157,78,221,0.35); /* Purple card borders */
+  box-shadow: 0 0 25px rgba(0,0,0,0.9), 0 0 15px rgba(255,122,0,0.25); /* Subtle orange outer glow */
+  flex: 1; 
+  min-width: 260px; 
+  position: relative; 
+  overflow: hidden; 
+}
+
+.card::before { 
+  content: ""; 
+  position: absolute; 
+  inset: 0; 
+  border-radius: inherit; 
+  border: 2px dashed rgba(255,122,0,0.15); /* Orange dashed inner frame */
+  mask-image: radial-gradient(circle at top left, transparent 0, transparent 14px, black 14px); 
+  opacity: 0.7; 
+  pointer-events: none; 
+}
+
+.card-header-row { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  gap: 8px; 
+}
+
+label { 
+  font-size: 13px; 
+  color: #ffffffd0; 
+  display: block; 
+  margin-bottom: 4px; 
+}
+
+input, select { 
+  padding: 6px; 
+  border-radius: 8px; 
+  border: 1px solid rgba(157,78,221,0.5); 
+  background: rgba(13,8,22,0.95); 
+  color: var(--hw-orange); 
+  outline: none; 
+  margin-bottom: 6px; 
+  width: 100%; 
+}
+
+input::placeholder { 
+  color: #9e9e9e; 
+}
+
+input:focus, select:focus { 
+  border-color: var(--hw-green); 
+  box-shadow: 0 0 8px rgba(57,255,20,0.8); /* Radioactive slime green glow on focus */
+}
+
+.btn { 
+  padding: 8px 14px; 
+  border-radius: 999px; 
+  /* Slime green active buttons */
+  background: radial-gradient(circle at top, var(--hw-green) 0%, #29bd0b 40%, #135c04 100%); 
+  color: #051402; 
+  border: 1px solid rgba(157,78,221,0.6); 
+  font-weight: 600; 
+  cursor: pointer; 
+  margin: 3px 4px 3px 0; 
+  box-shadow: 0 0 12px rgba(57,255,20,0.5), 0 0 4px rgba(157,78,221,0.6); 
+  letter-spacing: 0.03em; 
+  text-transform: uppercase; 
+  font-size: 12px; 
+}
+
+.btn:hover { 
+  transform: translateY(-1px); 
+  box-shadow: 0 0 18px rgba(57,255,20,0.8), 0 0 8px rgba(157,78,221,0.8); 
+}
+
+.btn:active { 
+  transform: translateY(1px) scale(0.98); 
+  box-shadow: 0 0 4px rgba(0,0,0,0.9); 
+}
+
+.btn-ghost { 
+  background: transparent; 
+  color: var(--hw-orange); 
+  border-color: rgba(255,122,0,0.6); 
+  box-shadow: none; 
+}
+
+.btn-ghost:hover { 
+  background: rgba(255,122,0,0.08); 
+  box-shadow: 0 0 10px rgba(255,122,0,0.5); 
+}
+
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  margin-top: 8px; 
+}
+
+th, td { 
+  padding: 6px 8px; 
+  border-bottom: 1px solid rgba(157,78,221,0.22); 
+  color: #fdfdfd; 
+  font-size: 14px; 
+  text-align: left; 
+}
+
+th { 
+  color: var(--hw-orange); 
+}
+
+tbody tr:nth-child(odd) { 
+  background: rgba(255,255,255,0.01); 
+}
+
+#leaderboard-body tr { 
+  transition: transform 420ms ease, background-color 420ms ease; 
+}
+
+/* Row shifted alert color switched to a flashing neon orange */
+#leaderboard-body tr.moved { 
+  background-color: rgba(255,122,0,0.18); 
+}
+
+#live-log { 
+  max-height: 220px; 
+  overflow-y: auto; 
+  font-size: 11px; 
+  background: rgba(11,5,16,0.95); 
+  border-radius: 8px; 
+  padding: 8px; 
+  border: 1px solid rgba(157,78,221,0.3); 
+  white-space: pre-wrap; 
+}
+
+@media (max-width: 720px) { 
+  body { 
+    padding: 16px; 
+  } 
+}
