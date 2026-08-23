@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RoxxieBot – Stars Overlay (Christmas)</title>
+	        <link rel="stylesheet" type="text/css" href="obscss.css">
+<style>
+  :root {
+    --xmas-red: #ff4b5c;
+    --xmas-green: #3cbf6b;
+    --xmas-gold: #f9e28c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #fdfdfd;
+  }
+
+  .snow {
+    pointer-events: none;
+    position: fixed;
+    top: -10%;
+    left: 0;
+    width: 100%;
+    height: 120%;
+    background-image:
+      radial-gradient(2px 2px at 20% 20%, rgba(255,255,255,0.65) 50%, transparent 60%),
+      radial-gradient(2px 2px at 80% 0%, rgba(255,255,255,0.75) 50%, transparent 60%),
+      radial-gradient(2px 2px at 0% 50%, rgba(255,255,255,0.6) 50%, transparent 60%),
+      radial-gradient(2px 2px at 100% 50%, rgba(255,255,255,0.5) 50%, transparent 60%),
+      radial-gradient(2px 2px at 50% 100%, rgba(255,255,255,0.7) 50%, transparent 60%);
+    background-size: 180px 260px;
+    animation: snow-fall 18s linear infinite;
+    opacity: 0.6;
+    z-index: -1;
+  }
+
+  @keyframes snow-fall {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(80px); }
+  }
+
+  .overlay-wrapper {
+    
+    padding: 8px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .board {
+    width:auto;
+	
+    max-width: 420px;
+    background: rgba(8, 10, 18, 0.82);
+    border-radius: 16px;
+    border: 1px solid rgba(249,226,140,0.55);
+    box-shadow:
+      0 0 18px rgba(0,0,0,0.9),
+      0 0 12px rgba(60,191,107,0.55);
+    padding: 10px 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  .board-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--xmas-gold);
+    text-shadow: 0 0 8px rgba(249,226,140,0.7);
+	padding-left:50px;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .title span {
+    font-size: 15px;
+	width:100%;
+	
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: #f0f0f0;
+    opacity: 0.85;
+    text-align: right;
+  }
+
+  table {
+	
+	height:100px;
+	width:400px;
+    border-collapse: collapse;
+    margin-top: 4px;
+	
+  }
+
+  th, td {
+    
+    font-size: 32px;
+    text-align: left;
+	
+  }
+
+  th {
+    color: var(--xmas-gold);
+    border-bottom: 1px solid rgba(249,226,140,0.35);
+  }
+
+  tbody tr:nth-child(odd) {
+    background: rgba(255,255,255,0.02);
+  }
+
+  tbody tr {
+    transition: transform 420ms ease, background-color 420ms ease;
+  }
+
+  tbody tr.moved {
+    background-color: rgba(255,75,92,0.22);
+  }
+
+  .rank {
+    width: 20px;
+    color: var(--xmas-gold);
+    font-weight: 600;
+  }
+
+  .user {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stars {
+    text-align: right;
+    font-weight: 600;
+    color: var(--xmas-green);
+    text-shadow: 0 0 6px rgba(60,191,107,0.7);
+  }
+</style>
+<script>
+
+<!--
+var fixurl = "http://192.168.1.172:8080/raw?url=";
+var serverURL;
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+const date = new Date();
+
+	
+var tsoh =  urlParams.get("streamer") ?? "RoxxieToxxic";
+console.log(window.location.hostname);
+if(window.location.hostname !="roxxiebot.ngrok.app")
+{
+serverURL= "http://192.168.1.172:8080/"
+fixurl = "http://192.168.1.172:8080/raw?url=";
+}
+else{
+serverURL= "http://192.168.1.172:8080/"
+fixurl = "http://192.168.1.172:8080/raw?url=";
+}
+//-->
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+
+</head>
+<body >
+<div>
+
+</div>
+<div class="snow"></div>
+<div class="overlay-wrapper">
+  <div class="board" id="scoreboard" style="display:none;" >
+    <div class="board-header">
+      
+     
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th style="text-align:right;">Stars</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<script>
+<!--
+let viewers = [];
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function runTask() {
+
+	loadJson();
+  // Wait for 15 seconds (15000 milliseconds)
+  await sleep(15000); 
+	renderLeaderboard("Madison");  
+
+}
+
+runTask();
+
+
+
+
+async function makeItVisible(){
+
+	
+var divScore = document.getElementById("scoreboard");
+divScore.style.display="inline-block";
+fadeIn(divScore);
+
+ await delay(8000); // Wait for 5 minutes
+ fadeOut(divScore)
+
+}
+function fadeOut(element) {
+    // Start opacity at its current computed value or 1 if not set
+    let opacity = parseFloat(window.getComputedStyle(element).opacity) || 1;
+
+    const interval = setInterval(function() {
+        if (opacity <= 0.1) {
+            clearInterval(interval); // Stop the interval
+            element.style.display = 'none'; // Hide the element completely from layout
+        } else {
+            opacity -= 0.05; // Decrease opacity by a small step
+            element.style.opacity = opacity;
+        }
+    }, 50); // The '50' defines the speed/smoothness of the animation
+}
+
+function fadeIn(element) {
+    let opacity = 0;
+    element.style.opacity = 0;
+    element.style.visibility = 'visible'; // Make it visible first so opacity can be seen
+
+    const interval = setInterval(function() {
+        if (opacity >= 1) {
+            clearInterval(interval); // Stop the interval when fully faded in
+        } else {
+            opacity += 0.05; // Increment opacity
+            element.style.opacity = opacity;
+        }
+    }, 50); // Adjust timing and increment for desired speed
+}
+
+async function loadJson(){
+
+	 
+	 try {
+        const response = await fetch(serverURL+months[date.getMonth()]+"_"+tsoh+'_vipboard2.json');
+        const data = await response.text();
+		
+		//console.log(data);
+		loadViewers(data);
+	  
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+
+}
+
+
+function loadViewers(data) {
+  const raw = data;
+  if (!raw) { viewers = []; return; }
+  try { viewers = JSON.parse(raw) || []; } catch(e) { console.log(e) }
+  viewers.forEach(v => { if (typeof v.stars === "undefined") v.stars = 0; });
+
+}
+
+function aggregated() {
+  const map = {};
+  viewers.forEach(v => {
+    const key = v.username;
+	//console.log(v);
+	
+    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
+    map[key].stars += v.stars;
+  });
+  return Object.values(map);
+}
+function renderLeaderboard(usr) {
+
+  const sorted = aggregated().sort((a,b)=>b.stars-a.stars).slice(0,100);
+  const tbody = document.getElementById("leaderboard-body");
+  tbody.innerHTML = "";
+  //console.log(usr);
+  //console.log(sorted);
+  
+  var i=sorted.findIndex(p => p.key === usr);
+  
+  var rank=i;
+   console.log(i);
+	
+	let row = document.createElement("tr");
+	console.log(sorted[i]);
+	
+  if(i>-1){
+    
+   row.innerHTML = `
+      <td class="rank">${rank+1}</td>
+      <td class="user">${sorted[i].username}</td>
+      <td class="stars">${sorted[i].stars}</td>
+    `;
+	}
+	else{
+	
+   row.innerHTML = `
+      <td class="rank" colspan=3>User not found!</td>
+    `;
+	}
+    tbody.appendChild(row);
+makeItVisible();
+
+}
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function beginFun(TwitchChannel){
+
+	ComfyJS.onResub=(user, message, subtier, months, cumulativeMonths, streakMonths, data) =>{
+		}
+		/**/
+		ComfyJS.onSub=( user, message, subTierInfo, extra )=>{
+
+		};
+		
+		ComfyJS.onSubGift=( gifterUser, streakMonths, recipientUser, senderCount, subTierInfo, extra ) =>{
+			
+		}
+		
+		ComfyJS.onSubMysteryGift =( gifterUser, numbOfSubs, senderCount, subTierInfo, extra ) =>{
+			
+			//Fix this  above
+		}
+		
+	ComfyJS.onCommand = (user, command, message, flags, extra) => {
+	
+	
+	if(flags.mod || flags.broadcaster){
+	if(command==="show"){
+	
+	
+	renderLeaderboard(message);
+	 
+	}
+	
+  } 
+  
+	}
+ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+ //console.log( extra);
+ 
+}
+
+        ComfyJS.Init(TwitchChannel);
+  
+}
+
+beginFun("roxxietoxxic");
+// younow part below 
+const currentTime = new Date();
+	const cMin = currentTime.getMinutes();
+	const cHour=currentTime.getHours();
+	var ynid=urlParams.get("YnId")??"51919855";
+
+	
+
+	getUserID();
+			
+//new version below  websocket version 
+
+function getUserID(){
+    const socket = new WebSocket('wss://younow-ws.zerody.one/?channelId='+ynid);
+
+
+    socket.onopen = (e) => {
+      console.log("[open] Connection established");
+    };
+
+    // 3. Event: Message received from server
+	socket.onmessage = (event) => {
+
+		const userObject = JSON.parse(event.data);
+		const Onstuff = userObject.event;
+
+
+			switch(Onstuff){
+							
+							case "onChat":
+								handleChat(userObject)						
+							break;
+							default:
+								//console.log(event);
+							break;
+							
+							}
+    };
+
+	
+}		
+
+
+function handleChat(userObject){
+
+//	console.log(userObject.data);
+	
+	var isMod=userObject.data.comments[0].broadcasterMod
+	var usrname=userObject.data.comments[0].name;
+	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
+	var message= userObject.data.comments[0].comment;
+	
+	//console.log(tmstamp+" "+usrname+":"+userObject.data.comments[0].comment);
+	console.log(usrname + " " + isMod);
+	if(isMod!=false)
+	{
+	if(message.includes("!show"))
+	{
+	var temp = message.split("!show");
+
+	renderLeaderboard(temp[0])	
+	makeItVisible();
+	}
+	}
+	
+}
+
+
+
+//-->
+</script>
+
+
+</body>
+</html>
