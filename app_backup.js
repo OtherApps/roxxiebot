@@ -2,8 +2,8 @@
 // start of  discord npm stuff 
 // install node-fetch@1.7.3  otherwise will get a fetch error
 /*
-
-
+Includes kick backend stuff 
+Include stripe backend stuff
 */
 const http = require("http");
 
