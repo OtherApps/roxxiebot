@@ -14,15 +14,13 @@
 if(offline!=false){
 console.log("offline");
 
-
-
 fixurl = "https://swan-tight-porpoise.ngrok-free.app/raw?url=";
 serverURL= "https://swan-tight-porpoise.ngrok-free.app/"; 
 }
 else{
 console.log("online");
-serverURL= "https://swan-tight-porpoise.ngrok-free.app/"; 
-fixurl =serverURL+"/raw?url="
+serverURL= "http://192.168.1.172:8080/"; 
+fixurl = "http://192.168.1.172:8080/raw?url=";
 
 }
 
@@ -104,8 +102,9 @@ function aggregated() {
   viewers.forEach(v => {
  
     const key = v.username.toLowerCase();
-    if (!map[key]) map[key] = { key, username: v.username, stars: 0 };
+    if (!map[key]) map[key] = { key, username: v.username, stars: 0 ,stickers:0};
     map[key].stars += v.stars;
+	map[key].stickers += v.stickers;
   });
  //console.log(Object.values(map));
   
@@ -129,8 +128,15 @@ console.log("Loading viewers");
 		
 		};
 		if(isNaN(v.stickers)){
-		v.stickers=0}
+		v.stickers=0}else{
+		v.stickers= parseInt(v.stickers);
+		//console.log(v.stickers);
+		
+		}
+		
+		
 		});
+	//console.log(viewers);
 	
 	//adjustNames(viewers);
 	renderLeaderboard()
@@ -161,7 +167,7 @@ function renderLeaderboard() {
       <td>${i+1}</td>
       <td>${u.username}</td>
       <td>${u.stars}</td>
-	  <td>${viewers[ix].stickers}</td>
+	  <td>${u.stickers}</td>
     `;
     tbody.appendChild(row);
   });
