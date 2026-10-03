@@ -75,8 +75,11 @@ app.use(express.json());
 
 app.use(express.static('./'));
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  next();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+	 res.setHeader("ngrok-skip-browser-warning", "true");
+    next();
 });
 app.listen(8080);
 app.post('/test',(req,res)=>{
