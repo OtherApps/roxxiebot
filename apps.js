@@ -1007,10 +1007,8 @@ var json = fetch ( targetUrl)
 async function Retry()
 {
     console.log ("Retrying in 5 seconds");
-    //AddToChat ("Retrying in 5 seconds", "HelperRobot", "basic", 50250342, 0, 0, false, 0);
-
     await sleep (5000);
-error = false;
+	error = false;
 
 
 }
@@ -1089,18 +1087,5 @@ let headers = {
 	
 }
 function Disc(msg,req,res){
-const client = new Discord.Client({ intents: [
-  Discord.GatewayIntentBits.Guilds,
-  Discord.GatewayIntentBits.GuildMessages,Discord.GatewayIntentBits.MessageContent
-]}); //creates new client
-
-client.on('ready', () => {
-	
- // console.log(`Logged in as ${client.user.tag}!`);
-   client.channels.cache.get(channelID).send(msg);
-   res.send("done")
-   
-});
-client.login(client_token); //signs the bot in with token
-
+/* Out dated*/
 }
