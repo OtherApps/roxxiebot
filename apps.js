@@ -1,21 +1,76 @@
 
 // start of  discord npm stuff 
-// install node-fetch@1.7.3  otherwise will get a fetch error
+// install node-fetch@1.7.3  othimwise will get a fetch error
 /*
 
 
 */
+const http = require("http");
+
 var express =  require('express'); 
 var app = express(); 
 const bodyParser= require('body-parser');
-const fetch = require("node-fetch");
+
 var jsonsave
 var found=false;
 const path2 = require('path');
 const date = new Date();
 const yad=date.getDate();
+const fs1 = require("fs")
+const fs = require("fs").promises;
+const fs3 = require("fs").promises;
+const path3 = require("path");
+
+class FileCoordinator {
+  constructor() {
+    this.activeWrites = Promise.resolve();
+    this.activeReads = 0;
+    this.writeQueue = [];
+  }
+
+  // Safe read: Waits for active writes to finish, then blocks new writes until done
+  async safeRead(filePath) {
+    // Wait for any ongoing write operations to clear out
+    await this.activeWrites;
+
+    this.activeReads++;
+
+    try {
+      const data = await fs.readFile(filePath, 'utf-8');
+      return data;
+    } finally {
+      this.activeReads--;
+    }
+  }
+
+  // Safe write: Queues up and executes sequentially, waiting for all reads to finish
+  async safeWrite(filePath, data) {
+    // Append this write operation to the end of the promise chain
+    this.activeWrites = this.activeWrites.then(async () => {
+
+      // Wait for any active reads to finish before writing
+      while (this.activeReads > 0) {
+        await new Promise(resolve => setTimeout(resolve, 5));
+      }
+
+      console.log(`[Queue] Writing to ${filePath}...`);
+
+      await fs.writeFile(filePath, data, {flag:'a'});
+
+    }).catch(err => {
+      console.error(`[Queue Error]`, err);
+    });
+
+    return this.activeWrites;
+  }
+}
 
 
+const coordinator = new FileCoordinator();
+
+const fileCache = new Set();
+const stripe = require('stripe')('');
+  
 
 console.log("Running");
 const months = [
@@ -25,6 +80,1046 @@ const months = [
 
 var checkname= months[date.getMonth()]+"_"+"RoxxieToxxic_vipboard2.json";
 var hist="history_"+checkname;
+/*kick listen and api */
+
+const crypto = require("crypto");
+
+
+// Backend stuff  
+const CLIENT_ID = "01KZ9X9K5XRY9QNF5VJQT4RARG";
+const CLIENT_SECRET = "805f28320e884ea60e5a78d1b2a8567fcde8191c81d0480c2d6e15c9cf12d139";
+
+
+const CHANNEL_NAME="RoxxieToxxic"
+
+const PORT = 8181;
+const PUBLIC_BASE_URL = "https://swan-tight-porpoise.ngrok-free.app";
+const OAUTH_CALLBACK = `${PUBLIC_BASE_URL}/kick/callback`; 
+const WEBHOOK_URL = `${PUBLIC_BASE_URL}/kick/webhook`;
+
+const SCOPES = [
+    "user:read",
+    "channel:read",
+    "events:subscribe"
+];
+
+let oauthState = null;
+let codeVerifier = null;
+
+let accessToken = null;
+let refreshToken = null;
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+	 res.setHeader("ngrok-skip-browser-warning", "true");
+    next();
+});
+
+// Keep the raw request body.
+// Kick signs:
+// messageId.timestamp.rawBody
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
+
+
+
+app.get("/kick/", (req, res) => {
+
+    res.send(`
+        <html>
+        <body style="font-family:Arial">
+
+            <h1>Kick Webhook Server</h1>
+
+            <p>Channel: ${CHANNEL_NAME}</p>
+
+            <p>
+                <a href="/kick/login">
+                    Connect Kick
+                </a>
+            </p>
+
+        </body>
+        </html>
+    `);
+
+});
+
+
+app.get("/kick/login", (req, res) => {
+
+    if (!CLIENT_ID) {
+
+        return res.status(500).send(
+            "CLIENT_ID is empty."
+        );
+
+    }
+
+    // ---------------------------------------------
+    // PKCE CODE VERIFIER
+    // ---------------------------------------------
+
+    codeVerifier =
+        crypto
+            .randomBytes(32)
+            .toString("base64url");
+
+    // ---------------------------------------------
+    // PKCE CODE CHALLENGE
+    // ---------------------------------------------
+
+    const codeChallenge =
+        crypto
+            .createHash("sha256")
+            .update(codeVerifier)
+            .digest("base64url");
+
+    // ---------------------------------------------
+    // STATE
+    // ---------------------------------------------
+
+    oauthState =
+        crypto
+            .randomBytes(32)
+            .toString("hex");
+
+    // ---------------------------------------------
+    // AUTHORIZATION URL
+    // ---------------------------------------------
+
+    const params =
+        new URLSearchParams({
+
+            response_type:
+                "code",
+
+            client_id:
+                CLIENT_ID,
+
+            redirect_uri:
+                OAUTH_CALLBACK,
+
+            scope:
+                SCOPES.join(" "),
+
+            code_challenge:
+                codeChallenge,
+
+            code_challenge_method:
+                "S256",
+
+            state:
+                oauthState
+
+        });
+
+    const authURL =
+        "https://id.kick.com/oauth/authorize?" +
+        params.toString();
+
+    console.log("");
+    console.log(
+        "======================================"
+    );
+    console.log(
+        "KICK OAUTH"
+    );
+    console.log(
+        "======================================"
+    );
+    console.log(authURL);
+    console.log(
+        "======================================"
+    );
+    console.log("");
+
+    res.redirect(authURL);
+
+});
+
+// =====================================================
+// OAUTH CALLBACK
+// =====================================================
+
+app.get("/kick/callback", async (req, res) => {
+
+    try {
+
+        const {
+            code,
+            state,
+            error,
+            error_description
+        } = req.query;
+
+        // ---------------------------------------------
+        // OAUTH ERROR
+        // ---------------------------------------------
+
+        if (error) {
+
+            console.log(
+                "Kick OAuth error:",
+                error,
+                error_description || ""
+            );
+
+            return res.status(400).send(`
+                <h1>Kick OAuth Error</h1>
+                <p>${error}</p>
+                <p>${error_description || ""}</p>
+            `);
+
+        }
+
+        // ---------------------------------------------
+        // CHECK CODE
+        // ---------------------------------------------
+
+        if (!code) {
+
+            return res.status(400).send(
+                "Kick did not return an authorization code."
+            );
+
+        }
+
+        // ---------------------------------------------
+        // CHECK STATE
+        // ---------------------------------------------
+
+        if (
+            !state ||
+            !oauthState ||
+            state !== oauthState
+        ) {
+
+            console.log(
+                "Invalid OAuth state."
+            );
+
+            return res.status(400).send(
+                "Invalid OAuth state."
+            );
+
+        }
+
+        // ---------------------------------------------
+        // CHECK PKCE
+        // ---------------------------------------------
+
+        if (!codeVerifier) {
+
+            return res.status(400).send(
+                "Missing PKCE code verifier."
+            );
+
+        }
+
+        console.log("");
+        console.log(
+            "Kick authorization successful."
+        );
+
+        // ---------------------------------------------
+        // EXCHANGE CODE
+        // ---------------------------------------------
+
+        const tokenBody =
+            new URLSearchParams({
+
+                grant_type:
+                    "authorization_code",
+
+                client_id:
+                    CLIENT_ID,
+
+                client_secret:
+                    CLIENT_SECRET,
+
+                redirect_uri:
+                    OAUTH_CALLBACK,
+
+                code:
+                    code,
+
+                code_verifier:
+                    codeVerifier
+
+            });
+
+        const tokenResponse =
+            await fetch(
+                "https://id.kick.com/oauth/token",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/x-www-form-urlencoded"
+
+                    },
+
+                    body:
+                        tokenBody
+
+                }
+            );
+
+        const tokenText =
+            await tokenResponse.text();
+
+        console.log(
+            "TOKEN STATUS:",
+            tokenResponse.status
+        );
+
+        console.log(
+            "TOKEN RESPONSE:",
+            tokenText
+        );
+
+        if (!tokenResponse.ok) {
+
+            return res.status(500).send(`
+                <h1>Kick Token Error</h1>
+                <pre>${tokenText}</pre>
+            `);
+
+        }
+
+        const tokenData =
+            JSON.parse(tokenText);
+
+        accessToken =
+            tokenData.access_token;
+
+        refreshToken =
+            tokenData.refresh_token;
+
+        if (!accessToken) {
+
+            throw new Error(
+                "Kick did not return an access token."
+            );
+
+        }
+
+        console.log("");
+        console.log(
+            "======================================"
+        );
+        console.log(
+            "ACCESS TOKEN RECEIVED"
+        );
+        console.log(
+            "======================================"
+        );
+
+        console.log(
+            "Scope:",
+            tokenData.scope
+        );
+
+        console.log(
+            "Expires:",
+            tokenData.expires_in
+        );
+
+        console.log(
+            "======================================"
+        );
+
+        // =================================================
+        // GET AUTHENTICATED USER
+        // =================================================
+
+        const user =
+            await getCurrentUser(
+                accessToken
+            );
+
+        console.log("");
+        console.log(
+            "Authenticated Kick account:"
+        );
+
+        console.log(
+            JSON.stringify(
+                user,
+                null,
+                2
+            )
+        );
+
+        // =================================================
+        // GET CHANNEL
+        // =================================================
+
+        const channel =
+            await getChannel(
+                accessToken
+            );
+
+        console.log("");
+        console.log(
+            "Channel:"
+        );
+
+        console.log(
+            JSON.stringify(
+                channel,
+                null,
+                2
+            )
+        );
+
+        const broadcasterID =
+            channel.broadcaster_user_id;
+
+        console.log("");
+        console.log(
+            "Broadcaster ID:",
+            broadcasterID
+        );
+
+        // =================================================
+        // SUBSCRIBE
+        // =================================================
+
+        const subscription =
+            await subscribeToGiftSubs(
+                accessToken,
+                broadcasterID
+            );
+
+        console.log("");
+        console.log(
+            "======================================"
+        );
+        console.log(
+            "SUBSCRIPTION RESULT"
+        );
+        console.log(
+            "======================================"
+        );
+
+        console.log(
+            JSON.stringify(
+                subscription,
+                null,
+                2
+            )
+        );
+
+        console.log(
+            "======================================"
+        );
+
+        res.send(`
+            <html>
+            <body style="font-family:Arial">
+
+                <h1>Kick Connected!</h1>
+
+                <p>
+                    Account:
+                    <strong>${user.username}</strong>
+                </p>
+
+                <p>
+                    Channel:
+                    <strong>${CHANNEL_NAME}</strong>
+                </p>
+
+                <p>
+                    Broadcaster ID:
+                    <strong>${broadcasterID}</strong>
+                </p>
+
+                <p>
+                    Gift-sub webhook subscription created.
+                </p>
+
+                <p>
+                    Webhook:
+                    <strong>${WEBHOOK_URL}</strong>
+                </p>
+
+                <p>
+                    You can close this window.
+                </p>
+
+            </body>
+            </html>
+        `);
+
+        // Clear one-time OAuth values
+        oauthState = null;
+        codeVerifier = null;
+
+    }
+    catch (err) {
+
+        console.error(
+            "OAuth callback error:",
+            err
+        );
+
+        res.status(500).send(`
+            <h1>Error</h1>
+            <pre>${err.stack || err}</pre>
+        `);
+
+    }
+
+});
+
+// =====================================================
+// GET CURRENT USER
+// =====================================================
+
+async function getCurrentUser(token) {
+
+    const response =
+        await fetch(
+            "https://api.kick.com/public/v1/users",
+            {
+
+                headers: {
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    Accept:
+                        "application/json"
+
+                }
+
+            }
+        );
+
+    const text =
+        await response.text();
+
+    console.log(
+        "USER STATUS:",
+        response.status
+    );
+
+    console.log(
+        "USER RESPONSE:",
+        text
+    );
+
+    if (!response.ok) {
+
+        throw new Error(
+            "Could not get authenticated Kick user."
+        );
+
+    }
+
+    const result =
+        JSON.parse(text);
+
+    if (
+        !result.data ||
+        !result.data.length
+    ) {
+
+        throw new Error(
+            "Kick returned no authenticated user."
+        );
+
+    }
+
+    return result.data[0];
+
+}
+
+// =====================================================
+// GET CHANNEL
+// =====================================================
+
+async function getChannel(token) {
+
+    const url =
+        "https://api.kick.com/public/v1/channels" +
+        "?slug=" +
+        encodeURIComponent(CHANNEL_NAME);
+
+    const response =
+        await fetch(
+            url,
+            {
+
+                headers: {
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    Accept:
+                        "application/json"
+
+                }
+
+            }
+        );
+
+    const text =
+        await response.text();
+
+    console.log(
+        "CHANNEL STATUS:",
+        response.status
+    );
+
+    console.log(
+        "CHANNEL RESPONSE:",
+        text
+    );
+
+    if (!response.ok) {
+
+        throw new Error(
+            "Could not get channel."
+        );
+
+    }
+
+    const result =
+        JSON.parse(text);
+
+    if (
+        !result.data ||
+        !result.data.length
+    ) {
+
+        throw new Error(
+            `Channel not found: ${CHANNEL_NAME}`
+        );
+
+    }
+
+    return result.data[0];
+
+}
+
+// =====================================================
+// SUBSCRIBE TO GIFTED SUBSCRIPTIONS
+// =====================================================
+
+async function subscribeToGiftSubs(
+    token,
+    broadcasterID
+) {
+
+    // IMPORTANT:
+    //
+    // Current Kick event name:
+    //
+    // channel.subscription.gifts
+    //
+    // NOT:
+    //
+    // channel.subscription.gifted
+
+    const body = {
+
+        broadcaster_user_id:
+            Number(broadcasterID),
+
+        method:
+            "webhook",
+
+        events: [
+
+            {
+
+                name:
+                    "channel.subscription.gifts",
+
+                version:
+                    1
+
+            }
+
+        ]
+
+    };
+
+    console.log("");
+    console.log(
+        "======================================"
+    );
+    console.log(
+        "SUBSCRIBING TO GIFT SUB EVENTS"
+    );
+    console.log(
+        "======================================"
+    );
+
+    console.log(
+        JSON.stringify(
+            body,
+            null,
+            2
+        )
+    );
+
+    const response =
+        await fetch(
+            "https://api.kick.com/public/v1/events/subscriptions",
+            {
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    "Content-Type":
+                        "application/json",
+
+                    Accept:
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify(body)
+
+            }
+        );
+
+    const text =
+        await response.text();
+
+    console.log("");
+    console.log(
+        "SUBSCRIPTION STATUS:",
+        response.status
+    );
+
+    console.log(
+        "SUBSCRIPTION RESPONSE:",
+        text
+    );
+
+    if (!response.ok) {
+
+        throw new Error(
+            `Kick subscription failed: ${response.status} ${text}`
+        );
+
+    }
+
+    return JSON.parse(text);
+
+}
+
+// =====================================================
+// LIST SUBSCRIPTIONS
+// =====================================================
+
+app.get(
+    "/kick/subscriptions",
+    async (req, res) => {
+
+        try {
+
+            if (!accessToken) {
+
+                return res.status(401).json({
+                    error:
+                        "Not authenticated with Kick."
+                });
+
+            }
+
+            const response =
+                await fetch(
+                    "https://api.kick.com/public/v1/events/subscriptions",
+                    {
+
+                        headers: {
+
+                            Authorization:
+                                `Bearer ${accessToken}`,
+
+                            Accept:
+                                "application/json"
+
+                        }
+
+                    }
+                );
+
+            const text =
+                await response.text();
+
+            console.log(
+                "SUBSCRIPTIONS:",
+                text
+            );
+
+            res
+                .status(response.status)
+                .send(text);
+
+        }
+        catch (err) {
+
+            console.error(err);
+
+            res.status(500).json({
+                error:
+                    err.message
+            });
+
+        }
+
+    }
+);
+
+// =====================================================
+// KICK WEBHOOK
+// =====================================================
+app.get("/kick/webhook", (req, res) => {
+    res.send("Kick webhook is online. Waiting for POST events.");
+});
+
+app.post(
+    "/kick/webhook",
+    async (req, res) => {
+
+        console.log("");
+        console.log(
+            "======================================"
+        );
+        console.log(
+            "KICK WEBHOOK"
+        );
+        console.log(
+            "======================================"
+        );
+
+        const eventType =
+            req.headers[
+                "kick-event-type"
+            ];
+
+        const version =
+            req.headers[
+                "kick-event-version"
+            ];
+
+        const messageID =
+            req.headers[
+                "kick-event-message-id"
+            ];
+
+        console.log(
+            "Event:",
+            eventType
+        );
+
+        console.log(
+            "Version:",
+            version
+        );
+
+        console.log(
+            "Message ID:",
+            messageID
+        );
+
+        console.log(
+            "Headers:",
+            req.headers
+        );
+
+        console.log(
+            "Body:",
+            JSON.stringify(
+                req.body,
+                null,
+                2
+            )
+        );
+
+        // Acknowledge immediately.
+        res.sendStatus(200);
+
+        // =================================================
+        // GIFTED SUBS
+        // =================================================
+
+        if (
+            eventType ===
+            "channel.subscription.gifts"
+        ) {
+
+            const data =
+                req.body;
+
+            console.log("");
+            console.log(
+                "######################################"
+            );
+
+            console.log(
+                "          GIFTED SUB!"
+            );
+
+            console.log(
+                "######################################"
+            );
+const gifter_username = data.gifter?.username || "Unknown";
+
+/*            console.log(
+                "Gifter:",
+                data.gifter?.username ||
+                "Unknown"
+            );
+ console.log(
+                "Number of gifted subs:",
+                data.giftees?.length ||
+                0
+            );
+  */
+const numofsubs=data.giftees?.length ||0;
+var info= [{username:gifter_username, stickers:numofsubs,stars:numofsubs*10 }]
+
+ 
+LogIt(checkname,info)
+            console.log(
+                "Recipients:"
+            );
+
+            if (
+                Array.isArray(
+                    data.giftees
+                )
+            ) {
+
+                for (
+                    const giftee
+                    of data.giftees
+                ) {
+
+                    console.log(
+                        " -",
+                        giftee.username
+                    );
+
+                }
+
+            }
+
+            console.log(
+                "Created:",
+                data.created_at
+            );
+
+            console.log(
+                "######################################"
+            );
+
+            return;
+
+        }
+
+        // =================================================
+        // NEW SUB
+        // =================================================
+
+        if (
+            eventType ===
+            "channel.subscription.new"
+        ) {
+
+            console.log(
+                "NEW SUB:"
+            );
+
+            var gifter_username =data.subscriber?.username;
+			
+var info= [{username:gifter_username, stickers:1,stars:10 }]
+
+ 
+LogIt(checkname,info)			
+//add code for new SUB
+            return;
+
+        }
+
+        // =================================================
+        // CHAT
+        // =================================================
+
+        if (
+            eventType ===
+            "chat.message.sent"
+        ) {
+
+            console.log(
+                data.sender?.username,
+                ":",
+                data.content
+            );
+
+            return;
+
+        }
+
+        // =================================================
+        // UNKNOWN EVENT
+        // =================================================
+	if(eventType==="kicks.gifted"){
+		   const data =
+                req.body;
+		//console.log(data.sender.username +" : "+data.gift.amount);
+		var fsname="./logs/kicks_"+months[date.getMonth()]+date.getDate+".json";
+		var kicks=[{username:data.sender.username,kicks:data.gift.amount}];
+		
+		LogIt(fsname,kicks)
+	return; 
+	
+	}
+        console.log(
+            "Unhandled Kick event:",
+            eventType
+        );
+
+    }
+);
+
+// =====================================================
+// START
+// =====================================================
+
+app.listen(
+    PORT,
+    () => {
+
+        console.log("Kick server running in the back");
+    }
+);
+
+
+/* End of kick stuff*/
 
 
 async function ensureFile(filePath, content){ 
@@ -49,6 +1144,24 @@ content=JSON.stringify(content);
     }
   }
 }
+
+async function ensureFile3(filePath, content) {
+
+  if (fileCache.has(filePath)) return;
+
+  const dir = path3.dirname(filePath);
+  await fs3.mkdir(dir, { recursive: true });
+
+  try {
+    await fs3.access(filePath);
+  } catch {
+    await fs3.writeFile(filePath, JSON.stringify(content));
+  }
+
+  fileCache.add(filePath);
+}
+
+
 {}
 // Usage
  const fdate2=months[date.getMonth()]+"-"+ date.getDate 
@@ -58,8 +1171,8 @@ username:"test",
   stickers:0,
   etad:0
 }]
-ensureFile(checkname,defaultName );
-ensureFile(hist,defaultName);
+//ensureFile(checkname,defaultName );
+//ensureFile(hist,defaultName);
 
 var client_token=''
 require('discord-reply');
@@ -70,19 +1183,134 @@ const channelID='1277289516515852410';
 
 
 //Discord plugin stuff 
-const fs = require("fs");
+const fs2 = require("fs");
 app.use(express.json()); 
 
+app.get('/api/pay', (req, res) => {
+  
+
+var paymentdate =
+    date.getFullYear() + "-" +
+    String(date.getMonth() + 1).padStart(2, "0") + "-" +
+    String(date.getDate()).padStart(2, "0");
+	
+var pay = getPaymentsForDate(res,paymentdate);
+
+});
+
+async function getPaymentsForDate(res,datePayment) {
+
+    var date = datePayment;
+    var totaldon = 0;
+    var numberofDons = 0;
+
+    try {
+
+        // Start of day
+        const startOfDay = Math.floor(
+            new Date(date + 'T00:00:00Z').getTime() / 1000
+        );
+
+        // End of day
+        const endOfDay = Math.floor(
+            new Date(date + 'T23:59:59Z').getTime() / 1000
+        );
+
+        const payments = await stripe.paymentIntents.list({
+            created: {
+                gte: startOfDay,
+                lte: endOfDay
+            },
+            limit: 100
+        });
+
+        numberofDons = payments.data.length;
+
+    //    console.log(`Found ${numberofDons} payments for ${date}`);
+
+        // Add up all payments
+        payments.data.forEach(payment => {
+
+         /*  console.log(
+                `- ${payment.id}: ${payment.amount / 100} ${payment.currency.toUpperCase()} - {payment.status}`
+				
+				
+            );
+				*/
+            totaldon += payment.amount / 100;
+        });
+
+ //       console.log("Total donations:", totaldon);
+
+        // Send response
+        if (numberofDons > 0) {
+
+            return res.status(200).json({
+                success: true,
+                message: "Your operation was successful!",
+                data: {
+                    id: 1,
+                    user: totaldon,
+                    numberOfDonations: numberofDons
+                }
+            });
+
+        } else {
+
+            return res.status(200).json({
+                success: true,
+                message: "No donations found",
+                data: {
+                    id: 1,
+                    user: 0,
+                    numberOfDonations: 0
+                }
+            });
+        }
+
+    } catch (error) {
+
+        console.error("Stripe Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
 app.use(express.static('./'));
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "*");
-    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-	 res.setHeader("ngrok-skip-browser-warning", "true");
-    next();
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
 });
+
+app.get('/subfile', (req, res) => {
+  fs1.readFile('./sub.txt', 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error reading file');
+      return;
+    }
+    // Set content type explicitly if needed, although Express often handles it
+    res.set('Content-Type', 'text/plain');
+    res.send(data);
+  });
+});
+
 app.listen(8080);
+//const coordinator = new FileCoordinator();
+const TARGET_FILE = checkname;
+
+// Simulating a burst of concurrent reads and writes
+/*
+coordinator.safeWrite(TARGET_FILE, JSON.stringify(defaultName));
+coordinator.safeRead(TARGET_FILE).then(data => console.log('Read 1 Result:', data));
+coordinator.safeWrite(TARGET_FILE, JSON.stringify({defaultName}));
+coordinator.safeRead(TARGET_FILE).then(data => console.log('Read 2 Result:', data));
+*/
 app.post('/test',(req,res)=>{
+
+
 
 var  streamers=req.body.streamer ?? "RoxxieToxxic";
 var checkname2= months[date.getMonth()]+"_"+streamers+"_vipboard2.json";
@@ -139,7 +1367,7 @@ app.get("/leaders",function (req,res){
 app.get('/raw',(req,res)=>{
 	
 //console.log( req.query.url);
- getJsonStuff(req.query.url,req,res); 
+getJsonStuff(req.query.url,req,res); 
 //res.end();	//  getJsonStuff(getsub,req,res); 
 	
 })
@@ -207,12 +1435,8 @@ var url2= "https://cdn.younow.com/php/api/channel/getInfo/channelId=" + req.para
    
    
 });
-app.get('/discord/msg=:str',function(req,res){
 
-	var msg= req.params.str;	
-	Disc(msg,req,res);
 
-});
 app.get('/chat/:path',function(req,res){
 	
 var url3= "https://api.younow.com/php/api/broadcast/info/curId=0/user="+req.params.path;
@@ -249,7 +1473,7 @@ app.get('/Song',(req,res)=>{
 
 function checkGuess(req,res,usr,smun){
 	try {
-		const data = fs.readFileSync('./public/Guess2.txt', 'utf8');
+		const data = fs1.readFileSync('./public/Guess2.txt', 'utf8');
 		//console.log('File content:', data);
 			
 			//var temp = data.split(","); 
@@ -291,12 +1515,12 @@ else{
 
 }
 function TopSubs(req,res,usr,nums){
-	const fs = require('fs');
+	
 	
 	const filePath = './public/'+date.getMonth()+'_TopSubs.txt';
 	const dataToAppend = usr+" "+nums +",";
 
-	fs.appendFile(filePath, dataToAppend, (err) => {
+	fs1.appendFile(filePath, dataToAppend, (err) => {
 	  if (err) {
 		console.error('Error appending to file:', err);
 		return;
@@ -308,11 +1532,11 @@ function TopSubs(req,res,usr,nums){
 }
 function SongRequest(req,res,usr,song){
 
-	const fs = require('fs');
+	
 	const filePath = './public/Song.txt';
 	const dataToAppend = usr+" "+song +",";
 
-	fs.appendFile(filePath, dataToAppend, (err) => {
+	fs1.appendFile(filePath, dataToAppend, (err) => {
 	  if (err) {
 		console.error('Error appending to file:', err);
 		return;
@@ -324,11 +1548,11 @@ function SongRequest(req,res,usr,song){
 }
 function saveGuess(req,res,usr,smun){
 	
-const fs = require('fs');
+//const fs = require('fs');
 const filePath = './public/Guess2.txt';
 const dataToAppend = usr+" "+smun +",";
 
-fs.appendFile(filePath, dataToAppend, (err) => {
+fs1.appendFile(filePath, dataToAppend, (err) => {
   if (err) {
     console.error('Error appending to file:', err);
     return;
@@ -340,11 +1564,11 @@ fs.appendFile(filePath, dataToAppend, (err) => {
 
 function SaveCount(req,res,smun){
 	
-const fs = require('fs');
+//const fs = require('fs');
 const filePath = './public/count.txt';
 const dataToAppend = smun+",";
 
-fs.appendFile(filePath, dataToAppend, (err) => {
+fs1.appendFile(filePath, dataToAppend, (err) => {
   if (err) {
     console.error('Error appending to file:', err);
     return;
@@ -383,7 +1607,7 @@ app.get('/username/:path', function(req, res) {
 });
 function showUserOnly(username,req,res){
 	
-	var content2 = fs.readFileSync("./cards.txt");
+	var content2 = fs1.readFileSync("./cards.txt");
 	var data2= String(content2);
 	var dataarray= data2.split("<br>"); 
 	
@@ -427,25 +1651,91 @@ function showUserOnly(username,req,res){
 	
 	}
 function readTextFile(){
-	var fs = require('fs');
+	//var fs = require('fs');
 	
-  const content = fs.readFileSync("./cards.txt");
+  const content = fs1.readFileSync("./cards.txt");
   res.write(content);
 
 
 
 }
-function displaySubList(req,res){
-	var fs = require('fs');
+async function displaySubList(req,res){
+/*	var fs = require('fs');
 	const content = fs.readFileSync("./sub.txt");
 	
 	res.write(content);
 	res.end();
-
+*/
 	//res.send("done");
-	
+
+  try {
+        const data = await fs1.promises.readFile("sub.txt", "utf8");
+
+        const lines = data
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        // Convert each line into an object with name + date
+        const entries = lines.map(line => {
+            const nameMatch = line.match(/^['"]?([^-,]+)-\d+/);
+            const dateMatch = line.match(/['"]([^'"]+)['"]/);
+
+            return {
+                line,
+                name: nameMatch ? nameMatch[1].trim().toLowerCase() : "",
+                date: dateMatch
+                    ? parseSubDate(dateMatch[1])
+                    : 0
+            };
+        });
+
+        // Sort newest first
+        entries.sort((a, b) => b.date - a.date);
+
+        // Remove duplicate names
+        // Because newest is first, the first one is always kept
+        const seen = new Set();
+
+        const unique = entries.filter(entry => {
+            if (!entry.name) return true;
+
+            if (seen.has(entry.name)) {
+                return false;
+            }
+
+            seen.add(entry.name);
+            return true;
+        });
+
+        // Return the original lines
+        res.type("text").send(
+            unique.map(entry => entry.line).join("\n")
+        );
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error reading subscriptions");
+    }	
 	
 }
+function parseSubDate(dateString) {
+
+    dateString = dateString.trim();
+
+    // Convert "September 17-2024" -> "September 17 2024"
+    // Convert "March-02-2023" -> "March 02 2023"
+    dateString = dateString.replace(/-/g, " ");
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) {
+        return 0;
+    }
+
+    return date.getTime();
+}
+
 function fliterOnly(data,res,userTo,userFrom,Card){
 
 
@@ -507,7 +1797,7 @@ function listlogs(req,res){
 	const directoryPath = path.join(__dirname, '/	logs');
 	var output; 
 //passsing directoryPath and callback function
-fs.readdir("./logs", function (err, files) {
+fs1.readdir("./logs", function (err, files) {
     //handling error
     if (err) {
         return console.log('Unable to scan directory: ' + err);
@@ -532,7 +1822,7 @@ function  updateCards(updatedData){
 	
 	
 	
-fs.writeFile('./cards.txt', updatedData, function (err) {
+fs1.writeFile('./cards.txt', updatedData, function (err) {
   if (err) throw err;
   console.log('Saved!');
 });
@@ -543,7 +1833,7 @@ function saveWord(data,req,res){
 var fileName='/hangman_words.txt'
 var stuff=data;
 
-fs.writeFile('./hangman_words.txt', data, function (err) {
+fs1.writeFile('./hangman_words.txt', data, function (err) {
   if (err) throw err;
   console.log('Saved!');
 });
@@ -556,10 +1846,10 @@ function saveSubData(data,req,res){
 	var data2 =data +"\r";
 	
 	
-	 fs.exists(fileName, function (exists) {
+	 fs1.exists(fileName, function (exists) {
         if(exists){}else
         {
-            fs.writeFile(fileName, {flag: 'w+'}, function (err, data2) 
+            fs1.writeFile(fileName, {flag: 'w+'}, function (err, data2) 
             { 
               
             })
@@ -570,14 +1860,14 @@ function saveSubData(data,req,res){
 	);
 	
 	
-	fs.appendFile(fileName, data2, (err)=>{
+	fs1.appendFile(fileName, data2, (err)=>{
 		
 		if(err){
 			console.log(err);
 			
 		}
 		else{
-			fs.readFileSync(fileName);
+			fs1.readFileSync(fileName);
 		
 	}
 		res.send("has been saved"); 
@@ -592,7 +1882,7 @@ app.get('/trade', function (request , response){
 	var cardSend = request.query.card; 
 	
 	response.header('Content-type', 'text/html');
-	var content2 = fs.readFileSync("./cards.txt");
+	var content2 = fs1.readFileSync("./cards.txt");
 	var data2= String(content2);
   
 	let position = data2.search(UserSending +","+cardSend);
@@ -694,10 +1984,10 @@ function saveLikes(username, likes){
 	const fileName =  "./likes.txt";
 	var data = "\t "+username +": " + likes +" \r <br> "
 	
-	 fs.exists(fileName, function (exists) {
+	 fs1.exists(fileName, function (exists) {
         if(exists){}else
         {
-            fs.writeFile(fileName, {flag: 'wx'}, function (err, data) 
+            fs1.writeFile(fileName, {flag: 'wx'}, function (err, data) 
             { 
               
             })
@@ -705,14 +1995,14 @@ function saveLikes(username, likes){
     });
 	
 	
-	fs.appendFile(fileName, data, (err)=>{
+	fs1.appendFile(fileName, data, (err)=>{
 		
 		if(err){
 			console.log();
 			
 		}
 		else{
-			fs.readFileSync(fileName);
+			fs1.readFileSync(fileName);
 		
 	}
 	
@@ -728,10 +2018,10 @@ function saveData(stuff){
 	const fileName =  "./likes.txt";
 	var data = " "+stuff +" \r "
 	
-	 fs.exists(fileName, function (exists) {
+	 fs1.exists(fileName, function (exists) {
         if(exists){}else
         {
-            fs.writeFile(fileName, {flag: 'wx'}, function (err, data) 
+            fs1.writeFile(fileName, {flag: 'wx'}, function (err, data) 
             { 
               
             })
@@ -739,14 +2029,14 @@ function saveData(stuff){
     });
 	
 	
-	fs.appendFile(fileName, data, (err)=>{
+	fs1.appendFile(fileName, data, (err)=>{
 		
 		if(err){
 			console.log();
 			
 		}
 		else{
-			fs.readFileSync(fileName);
+			fs1.readFileSync(fileName);
 		
 	}
 	
@@ -761,10 +2051,10 @@ function writeLogTest(username,ids){
 	const fileName =  "logs/"+username+".txt";
 	var data = "\t "+username +"," + ids +" \r <br> "
 	
-	 fs.exists(fileName, function (exists) {
+	 fs1.exists(fileName, function (exists) {
         if(exists){}else
         {
-            fs.writeFile(fileName, {flag: 'wx'}, function (err, data) 
+            fs1.writeFile(fileName, {flag: 'wx'}, function (err, data) 
             { 
               
             })
@@ -772,14 +2062,14 @@ function writeLogTest(username,ids){
     });
 	
 	
-	fs.appendFile(fileName, data, (err)=>{
+	fs1.appendFile(fileName, data, (err)=>{
 		
 		if(err){
 			console.log();
 			
 		}
 		else{
-			fs.readFileSync(fileName);
+			fs1.readFileSync(fileName);
 		
 	}
 	
@@ -789,7 +2079,7 @@ function writeLogTest(username,ids){
 async function GiveVip(request,response,usr,to,sar,stick){
 	// update name part
 	
-	var data = fs.readFileSync("vipboard.json");
+	var data = fs1.readFileSync("vipboard.json");
 	var myObject=[];
 	var myObject = JSON.parse(data)
 	const foundFromName = myObject.findIndex(p => p.name === usr);
@@ -799,7 +2089,7 @@ console.log("Old version");
 console.log(myObject);
 
 
-	// check if  user exist , check if to exist (if not) add , check if  from has amount of stickers otherwise throw error 
+	// check if  user exist , check if to exist (if not) add , check if  from has amount of stickers othimwise throw error 
 	if(foundFromName >=0){
 		if((myObject[foundFromName].score >=sar)&&(myObject[foundFromName].stickers>=stick))
 		{
@@ -814,7 +2104,7 @@ console.log(myObject);
 				//console.log(myObject);
 				//response.send("Updated");
 			
-			saveVipBoard(request,response,myObject,"Updated",checkname2);
+			saveVipBoard(request,response,myObject,"Updated",checkname);
 
 							}
 			else{
@@ -830,7 +2120,8 @@ console.log(myObject);
 				//console.log(myObject);
 				//response.send("Added new ");
 				
-			saveVipBoard(request,response,myObject,"Added New",checkname2);
+			saveVipBoard(request,response,myObject,"Added New",checkname2); //changed hime
+			
 			}
 			
 		}
@@ -851,12 +2142,18 @@ console.log(myObject);
 async function saveHistory(data,db){
 	//console.log(data);
 	
-	var data2 = fs.readFileSync(db);
-	var myObject = JSON.parse(data2)||[{}];
+	var data2 = fs1.readFileSync(db);
+	try{
 	
+	var myObject = JSON.parse(data2)||[{}];
+	}
+	catch(err){
+	console.load(err);
+	
+	}
 	myObject.push(data);	
 	var newData2 =JSON.stringify(myObject)
-	fs.writeFile(db, newData2, (err) => {
+	fs1.writeFile(db, newData2, (err) => {
   // Error checking
   if (err) throw err;
   console.log("Logged added");
@@ -874,7 +2171,7 @@ ensureFile(checkname2,defaultName );
 ensureFile(hist2,defaultName);
 console.log("Saving to:" +checkname2);
 try{
-	var data = fs.readFileSync(checkname2);
+	var data = fs1.readFileSync(checkname2);
 	VipSave2(request,response,usr,sar,stick,streamer,plat)
 
 }
@@ -887,30 +2184,67 @@ catch (err) {
 
 
 }
+
+function makeJsonValid(data,filename){
+
+	const fs = require('fs');
+	
+	jsonData=data;
+	
+	try {
+	
+		const fileContent = fs1.readFileSync(filename, 'utf8');
+		jsonData = JSON.parse(fileContent);
+			
+			return jsonData; 
+		} catch (err) {
+			
+			fs1.writeFileSync(filename, JSON.stringify(defaultName, null, 2));
+			return defaultName; 
+			
+}
+	
+}
 async function VipSave2(request,response,usr,sar,stick,streamer,plat){
 
 
 var checkname2= months[date.getMonth()]+"_"+streamer+"_vipboard2.json";
 var hist2="history_"+checkname2;
-ensureFile(checkname2,defaultName );
-ensureFile(hist2,defaultName);
 
 console.log("Saving to:" +checkname2);
-var data = fs.readFileSync(checkname2);
+var data = fs1.readFileSync(checkname2);
 var fdate=months[date.getMonth()] + "-" + date.getDate();
 
 var myObject=[];
 var name=usr;
+
+//console.log("precrash " +data )
+try{
 myObject = JSON.parse(data)
+console.log(myObject)
+
+}
+catch (error) {
+    if (error instanceof SyntaxError) {
+        console.error("Caught expected JSON error:", error.message);
+        // Error message will be: "Unexpected end of JSON input"
+    } else {
+        throw error; // Re-throw if it's a different type of error
+    }
+	
+}	
 var foundName;
 if((typeof myObject==='object') && (myObject !==null))
 {
  foundName= myObject.findIndex(p => p.username === usr);
 }
 else{
-	foundName =-1
+	foundName =-1;
+	myObject = [{}];
 	
 }
+console.log(myObject);
+
  if(foundName>-1){
 	 // update 
 myObject[foundName].stars =sar;	 
@@ -925,7 +2259,7 @@ myObject[foundName].id=plat;
   id:plat
 };
 let newData= myObject;
- saveHistory(newData2,hist2);
+ //saveHistory(newData2,hist2);
  }
  else{
 // add a new name
@@ -937,37 +2271,59 @@ let newData= myObject;
   etad:fdate,
   id:plat
 };
-console.log(newData);
- saveHistory(newData,hist2);
+// console.log(newData);
+// saveHistory(newData,hist2);
 if(Array.isArray(myObject)){
-
 		console.log("Is an array"); 
-		
 }
 else{
 	console.log("Is not an array");
-	
-	
 }
 // Adding the new data to our object
 myObject.push(newData);	 
 	 
  }
 var newData2 = JSON.stringify(myObject);
+/*
+try {
+  await fs.writeFile(checkname2, newData2);
+  //console.log(newData2);
+  response.send("New data added");
+} catch (err) {
+  console.error(err);
+  response.status(500).send("File write failed");
+}
+try{
+	await fs.writeFile(checkname2, newData2)
+	response.send("Saved");
+	
+  // Error checking
+  ;
+}
+catch (err){
+	
+	response.status(500).send("File write failed");
+	
+}
 
- 
 fs.writeFile(checkname2, newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("New data added");
 });
-
+*/
+//console.log(newData2);
+fs.writeFile(checkname2, newData2, (err) => {
+  // Error checking
+  if (err) throw err;
+response.send("New data added");
+});
 }
 function saveVipBoard(request,response,myObject,msg,streamdb){
 	
 	var newData2 = JSON.stringify(myObject);
 
-fs.writeFile(streamdb, newData2, (err) => {
+fs1.writeFile(streamdb, newData2, (err) => {
   // Error checking
   if (err) throw err;
 response.send("Status :"+msg );
@@ -1010,11 +2366,45 @@ var json = fetch ( targetUrl)
 async function Retry()
 {
     console.log ("Retrying in 5 seconds");
+    //AddToChat ("Retrying in 5 seconds", "HelperRobot", "basic", 50250342, 0, 0, false, 0);
+
     await sleep (5000);
-	error = false;
+error = false;
 
 
 }
+
+
+async function appendToJsonFile(filePath, newData) {
+  try {
+    let jsonArray = [];
+
+    try {
+      // 1. Read the existing file
+      const fileContent = await readFile(filePath, 'utf-8');
+      
+      // 2. Parse it into a JavaScript array (if it's not empty)
+      if (fileContent.trim()) {
+        jsonArray = JSON.parse(fileContent);
+      }
+    } catch (readError) {
+      // If the file doesn't exist, we start with an empty array
+      if (readError.code !== 'ENOENT') throw readError;
+    }
+
+    // 3. Push the new object or item into the array
+    jsonArray.push(newData);
+
+    // 4. Write the updated array back to the file
+    // (The null and 2 parameters format it with clean spacing)
+    await writeFile(filePath, JSON.stringify(jsonArray, null, 2), 'utf-8');
+    
+    console.log('JSON data successfully appended!');
+  } catch (error) {
+    console.error('Error handling JSON file:', error);
+  }
+}
+
 async function GetDataClean(urls,req,res){
 	
 		 var json = fetch ( urls)
@@ -1084,11 +2474,56 @@ let headers = {
         .catch (e =>
         {
 			
-			//console.log(e); 
+			console.log(e); 
         });
 	
 	
 }
 function Disc(msg,req,res){
-/* Out dated*/
+const client = new Discord.Client({ intents: [
+  Discord.GatewayIntentBits.Guilds,
+  Discord.GatewayIntentBits.GuildMessages,Discord.GatewayIntentBits.MessageContent
+]}); //creates new client
+
+client.on('ready', () => {
+	
+ // console.log(`Logged in as ${client.user.tag}!`);
+   client.channels.cache.get(channelID).send(msg);
+   res.send("done")
+   
+});
+client.login(client_token); //signs the bot in with token
+
+}
+async function AddNew2(id,name,stars,stickers){
+	//request.query.name,request.query.stars,request.query.stickers
+	  try {
+        const response = await fetch(serverURL+"vip?di="+id+"&name="+name+"&stars="+stars+"&stickers="+stickers+"&streamer="+tsoh);
+		
+		
+		console.log(serverURL+"vip?di="+id+"&name="+name+"&stars="+stars+"&stickers="+stickers+"&steamer="+tsoh);
+		
+        const data = await response.text();
+		
+		console.log(data);
+		
+	  
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+	
+}
+function LogIt(fname,data){
+	var data2=JSON.stringify(data);
+	console.log(data2);
+// fix this part... read json file first then push 
+appendToJsonFile(fname,data)
+/*
+	 fs1.appendFile(checkname,
+	  `${data2}`
+	,()=>{
+	 //console.log('Successfully saved');
+	})
+*/
+	
 }
