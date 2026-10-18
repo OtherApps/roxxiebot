@@ -1,0 +1,608 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>BOT</title>
+	
+<style>
+
+</style>
+<script>
+<!--
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+const date = new Date();
+
+
+var fixurl,serverURL;
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString); 
+	var twitchUser=urlParams.get("TwitchId")??"RoxxieToxxic";
+	var tsoh =  urlParams.get("streamer")??"RoxxieToxxic";
+	var ynid=urlParams.get("YnId")??"51919855";
+	var checkname= months[date.getMonth()]+"_"+tsoh+"_vipboard2.json";
+
+
+console.log(checkname);
+if(window.location.hostname !="roxxiebot.ngrok.app")
+{
+serverURL= "https://swan-tight-porpoise.ngrok-free.app/"
+fixurl = "https://swan-tight-porpoise.ngrok-free.app/raw?url=";
+}
+else{
+
+serverURL= "https://swan-tight-porpoise.ngrok-free.app/"
+fixurl = "https://swan-tight-porpoise.ngrok-free.app/raw?url=";
+
+}
+
+async function startUp(){
+
+const data3 = {streamer:tsoh};
+	
+	
+	  try {
+        const response = await fetch(serverURL+"test",{
+			method: 'POST', // Specify the method
+		
+		headers: {
+        'Content-Type': 'application/json', // Required for JSON
+					},
+		body: JSON.stringify(data3)});
+		
+        const output = await response.text();
+		
+		console.log(output);
+		
+	  
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+startUp();
+
+//-->
+</script>
+<script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+
+<script src="must.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Bangers&family=Radley:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+
+.bangers-regular {
+  font-family: "Bangers", system-ui;
+  font-weight: 400;
+  font-style: normal;
+  width:400px;
+  height:100px;
+  font-color:black;
+  font-size:50px;
+  position:absolute;
+  
+}
+</style>
+</head>
+<body >
+<span class="banger-regular" id="subcount">
+YN SUB GOAL -
+</span>
+
+<script>
+var subtotal=0;
+
+let viewers = [];
+const doubleStars=false;
+
+async function loadJson(){
+	  try {
+        const response = await fetch(serverURL+checkname);
+        const data = await response.text();
+		//console.log(data);
+		
+		loadViewers(data);
+	  
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+
+}
+
+
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+//setInterval(makeItVisible, 100000)
+// Load from same localStorage key as Christmas dashboard
+function loadViewers(data) {
+  const raw = data;
+  if (!raw) { viewers = []; return; }
+  try { viewers = JSON.parse(raw) || []; } catch(e) { viewers = []; }
+  viewers.forEach(v => { if (typeof v.stars === "undefined") v.stars = 0; });
+
+}
+
+function aggregated() {
+  const map = {};
+	
+	var temp = null; 
+	var listofnames=""; 
+  
+  viewers.forEach(v => {
+    const key = v.username.toLowerCase();
+  if (!map[key]) map[key] = { key, username: v.username, stars:v.stars,stickers:v.stickers,};
+	if(listofnames.includes(v.username))
+	{
+		map[key].stars = parseInt(v.stars) +parseInt(map[key].stars);
+		map[key].stickers=parseInt(v.stickers)+ parseInt(map[key].stickers);
+		
+		}
+	else
+	{
+		listofnames=listofnames +","+v.username; 
+		map[key].stars = v.stars;
+		}
+  //map[key].stars = v.stars;
+  });
+  return Object.values(map);
+}
+
+function renderLeaderboard() {
+//console.log(viewers);
+
+}
+
+// Initial load + polling refresh
+loadJson()
+ynchatStart(ynid);
+
+function ynchatStart(ynid2){
+console.log("YN part");
+
+    const socket = new WebSocket('wss://younow-ws.zerody.one/?channelId='+ynid2);
+
+
+    socket.onopen = (e) => {
+      console.log("[open] Connection established");
+    };
+
+    // 3. Event: Message received from server
+	socket.onmessage = (event) => {
+
+		const userObject = JSON.parse(event.data);
+		const Onstuff = userObject.event;
+
+
+			switch(Onstuff){
+							
+							case "onChat":
+								handleChat(userObject)						
+							break;
+							
+							case "onSticker":
+							
+							onSticker(userObject);
+							break;
+							
+							case "onSub":
+							console.log(userObject.data);
+							
+			
+							break;
+							case "onResub":
+							
+							console.log("Resub");
+							console.log(userObject.data); 
+							
+							break;
+							
+							case "onGift":
+							
+							handleGifts(userObject);
+							break;
+							
+							default:
+							
+							if((Onstuff!="onBroadcastPlayData")&&(Onstuff!="onSystemMessage")&&(Onstuff!="onProxyAgoraRoomJoined")&&(Onstuff!="onProxySubscriptonCreated")&&(Onstuff!="onProxyBroadcastInfo")&&(Onstuff!="onTopFanChange")&&(Onstuff!="onPropsChestResult")&&(Onstuff!="onPropsChest"))
+							{
+								//console.log(userObject);
+							}
+							else if(Onstuff==="onProxyAgoraRoomLeaved"){
+							
+							console.log("offline");
+							}
+							else{
+							
+							}
+							}
+							
+    };
+}
+
+
+function beginFun(TwitchChannel){
+console.log("Currently working on " + TwitchChannel);
+
+	ComfyJS.onResub=(user, message, subtier, months, cumulativeMonths, streakMonths, data) =>{
+		console.log("Re-Sub");
+			if(data !=undefined){
+			console.log(data);
+			
+			}
+			
+			const viewer = ensureViewer("Twitch-bot", user);
+			addStars2(user,10,"twitch-bot",1) /*new version */
+			//addStars2 (viewer, 10,"twitch-bot",1);
+			
+			//console.log(viewer);
+			
+	
+		}
+		ComfyJS.onCheer=( user, message, bits, flags, extra )=>{
+		console.log(user + " " + bits); 
+		
+		}
+		/*ComfyJS.onCheer( user, message, bits, flags, extra )=>{}*/
+		ComfyJS.onSub=( user, message, subTierInfo, extra )=>{
+				console.log("new subs");
+				console.log(extra);
+			// const viewer = ensureViewer("Twitch-bot", user);
+			//	viewer.stars=parseInt(viewer.stars+10);
+			//	viewer.stickers=parseInt(viewer.stickers+1)
+			addStars2(user,10,"twitch-bot",1) /*new version */
+			//		addStars2 (viewer, 10,"twitch-bot",1)
+			//	console.log(viewer);
+					subcount++;
+			
+		};
+		
+		ComfyJS.onSubGift=( gifterUser, streakMonths, recipientUser, senderCount, subTierInfo, extra ) =>{
+		//	console.log("Has gifted: " + 1); 
+		}
+		
+		ComfyJS.onSubMysteryGift =( gifterUser, numbOfSubs, senderCount, subTierInfo, extra ) =>{
+			console.log("Has gifted: " + numbOfSubs); 
+			
+			subcount=numbOfSubs+subcount;
+			
+			const viewer = ensureViewer("Twitch-bot", gifterUser);
+			
+			viewer.stars = parseInt(viewer.stars+ (numbOfSubs*10));
+			viewer.stickers=parseInt(view.sticker+numbOfSubs);
+			
+			console.log(viewer);	
+	addStars2(user,10*numbOfSubs,"twitch-bot",numbOfSubs) /*new version */
+			
+			//addStars2 (viewer, numbOfSubs*10,"twitch-bot",numbOfSubs)
+			//SubIt(gifterUser + " gifted  " +numbOfSubs + " subs " ); 
+			//Fix this  above
+		}
+		
+	ComfyJS.onCommand = (user, command, message, flags, extra) => {
+	
+	
+	if(flags.mod || flags.broadcaster){
+	if(command==="vip"){
+	makeItVisible();
+	
+	}
+	else if (command==="add"){
+	var data = message.split(" ");
+	var twitchMod=user+"Twitch-Mod";
+	
+	console.log(data)
+	const viewer = ensureViewer("Twitch-mod", data[0]);
+	addStars2 (viewer, data[1],twitchMod,data[2])
+	addStars2(user,data[1],"twitch-bot",data[2]) /*new version */
+
+	}
+  } 
+  
+	}
+ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+ //console.log( extra);
+ 
+}
+
+        ComfyJS.Init(TwitchChannel);
+  
+}
+
+beginFun(twitchUser)
+
+
+function handleGifts(userObject){
+
+	if(userObject.data.stageGifts[0].SKU==="SUBSCRIPTION_GIFT")
+							{
+
+		
+						
+							console.log("Gifted sub + ")
+							var comments=userObject.data.stageGifts[0].comment;
+							var parts =comments.split(" "); 
+						//	console.log(parts);
+							
+							console.log("Has gifted a sub " + parts[0]);
+		
+		const viewer = ensureViewer("Yn-bot-gifted-sub",parts[0]);
+		
+							viewer.stars=parseInt(viewer.stars+10);
+							viewers.sticker=parseInt(viewer.sticker+1)
+			addStars2(part[0],10,"yn-bot",1) /*new version */				
+							
+							//addStars2 (viewer, 10,"yn-bot-gifted-sub",1)
+		
+							}
+	else if (userObject.data.stageGifts[0].SKU==="RESUBSCRIBED"){
+							
+						const viewer = ensureViewer("Yn-bot-resub", userObject.data.stageGifts[0].profileUrlString);
+						
+						viewer.stars=parseInt(viewer.stars+10);
+						viewers.stickers=parseInt(viewers.stickers+1)
+addStars2(userObject.data.stageGifts[0].profileUrlString,10,"twitch-bot",1) /*new version */
+//						addStars2 (viewer, 10,"yn-bot-resub",1)
+		//console.log(userObject.data.stageGifts[0].profileUrlString+" has resubscribed")
+							
+							}
+	else if (userObject.data.stageGifts[0].SKU==="SUBSCRIBED"){
+							
+							const viewer = ensureViewer("Yn-bot-resub", userObject.data.stageGifts[0].profileUrlString);
+						
+						viewer.stars=parseInt(viewer.stars+10);
+						viewers.stickers=parseInt(viewers.stickers+1)
+addStars2(userObject.data.stageGifts[0].profileUrlString,10,"yn-bot",1)
+						
+//addStars2 (viewer, 10,"SUBSCRIBED",1)
+
+							}
+							
+							else{
+								
+								//Handle all other gifts 
+							//	console.log(userObject.data.stageGifts[0]);
+								//console.log(userObject.data.stageGifts[0].value);
+	
+							}
+}
+function handleChat(userObject){
+
+//	console.log(userObject.data);
+	
+	var isMod=userObject.data.comments[0].broadcasterMod
+	var usrname=userObject.data.comments[0].name;
+	var tmstamp=timeConverter(userObject.data.comments[0].timestamp);
+	var message= userObject.data.comments[0].comment;
+	var extra=userObject.data.comments[0].subscriptionData ?? "Empty";
+	
+	if(extra !="Empty"){
+	//console.log(extra.badgeAssetSku);
+	
+	}
+	
+//	console.log(tmstamp+" "+usrname+":"+userObject.data.comments[0].comment);
+	//console.log(usrname + " " + isMod);
+	/*if(userObject.data.subscriptionData !=null){
+	console.log(userObject.data.subscriptionData);
+	
+	
+	}
+	else{
+	
+	console.log(message);
+	
+	}
+	*/
+	
+	if(isMod!=false)
+	{
+	
+	if(message.includes("!add")){
+	
+					var temp=message.split("!add");
+					var getstuff=temp[1].split(" ");
+					var usr= getstuff[1]; 
+					var amt=getstuff[2];
+					const viewer = ensureViewer("younow", usr);
+					var ynmod=usrname+"-YouNow";
+
+					//addStars2(usr,amt,ynmod,getstuff[3])
+					addStars2 (viewer, amt,ynmod,getstuff[3])
+						outstuff = temp[1];
+					
+	
+	}
+	}
+	
+}
+
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  if(sec <10 ){
+	sec ="0"+sec
+
+  }
+  if(hour <10) {
+	hour = "0" + hour;
+
+  }
+  if(min <10){
+	min = "0" + min
+
+  }
+  var time =   hour + ':' + min ;
+  return time;
+}
+function onSticker(userObject){
+var firstpart="https://ynassets.younow.com/subscriptionsTiers/usersAssets/live/"
+		
+		var id=userObject.data.stickers[0].stickerUserId
+		var stick=userObject.data.stickers[0].assetSku
+
+
+						
+					//	console.log(firstpart+""+id+"/"+stick+"/web_"+stick+".png");
+		
+}
+const kickid = urlParams.get('kickid')??460187;
+main(kickid);
+
+function main(chatroomID) {
+console.log("With in main Kick");
+
+const chat = new WebSocket('wss://ws-us2.pusher.com/app/34bf7a0ff419a2a775b9?protocol=7&client=js&version=8.4.0-rc2&flash=false');
+	
+	
+    chat.onerror = (error) => {
+        console.log("Error: " + error);
+    };
+
+    chat.onopen = () => {
+        console.log("Connected to Pusher");
+   
+        setTimeout(() => {
+           // document.getElementById("loading").style.display = "none";
+        }, 1000);
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `chatrooms.${chatroomID}.v2`
+                },
+            })
+        );
+        chat.send(
+            JSON.stringify({
+                event: 'pusher:subscribe',
+                data: {
+                    auth: "",
+                    channel: `channel.${chatroomID + 2}`
+                },
+            })
+        )
+    };
+	
+    chat.onmessage = (event) => {
+	
+	
+dealwithmsg(event.data);		
+    };
+
+    // Ping every 1 minute to keep the connection alive
+    setInterval(() => {
+        chat.send(JSON.stringify({
+            event: 'pusher:ping',
+            data: {}
+        }));
+    }, 60000);
+}
+
+//userData.subscriber_badges
+function dealwithmsg(rawdata){
+	msg=JSON.parse(rawdata);
+	
+	const data = JSON.parse(
+        msg.data.replace(/\\u00a0/g, " ")
+            .replace(/\\n/g, " ")
+            .replace(/\\t/g, " ")
+            .replace(/\\r/g, " ")
+            .replace(/\\f/g, " ")
+            .replace(/\\b/g, " ")
+            .replace(/\\v/g, " ")
+            .replace(/\\\\/g, "\\")
+    );
+	//console.log(data.sender);
+	//console.log(msg)
+	
+ 
+ 
+ 
+ if (msg.event== "App\\Events\\ChatMessageEvent") {
+      
+	  	 	let msgID = data.id;
+    let msgContent = data.content;
+    let msgSender = data.sender.username;
+    let msgTimestamp = data.created_at;
+		
+		
+	 // console.log(msgSender+" "+msgContent + " " );
+	  
+    }
+	else if(msg.event =="App\\Events\\GiftedSubscriptionsEvent"){
+//App\\Events\\GiftedSubscriptionsEvent',
+	console.log(data);
+	//	ShowMsg(data);
+		
+		
+	}
+	else if(msg.event=="App\\Events\\SubscriptionEvent"){
+		/*{"chatroom_id": 2575726,"username": "jennarous","months": 15}*/	
+var usrname=data.username; 
+var submonths = data.months; 
+
+	
+	
+	console.log(data);
+	//	ShowMsg(data);
+	}	
+else{
+	/* 
+	subscription_succeeded
+	*/
+	
+	//console.log(msg);
+	
+	
+}
+
+	
+}
+
+async function getUserInformationsKick(usrName){
+	var fullurl = "https://kick.com/api/v2/channels/"+usrName+"/users/"+usrName; 
+//console.log(fullurl);
+fetch(fullurl)
+    .then((response) => {
+      return response.json();
+    })
+	.then((data)=>{
+		if(data.profile_pic!=null){
+			console.log(data.profile_pic);
+			
+			//preLoad(usrName,data.profile_pic)
+		}
+		else{
+			//preLoad(usrName,"https://www.pngall.com/wp-content/uploads/5/User-Profile-PNG-Image.png");
+			
+		}
+	}
+	
+	
+	)
+}
+
+
+
+</script>
+
+
+</body>
+</html>
